@@ -10,13 +10,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <div className="app-container">
-          <header className="glass-panel" style={{ margin: '1rem', padding: '1rem 2rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--primary)' }}>Project Tracker</h1>
-            <nav>
-              <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>Welcome, Admin</span>
-            </nav>
-          </header>
-          <main style={{ padding: '0 1rem 2rem 1rem' }}>
+          <main style={{ padding: '0', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             {children}
           </main>
         </div>

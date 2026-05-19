@@ -7,11 +7,15 @@ export async function GET(request) {
     const owner = searchParams.get('owner');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
+    const status = searchParams.get('status');
 
     // Build filter conditions
     const where = {};
     if (owner) {
-      where.owner = { contains: owner, mode: 'insensitive' };
+      where.owner = { contains: owner };
+    }
+    if (status) {
+      where.status = status;
     }
     if (startDate) {
       where.startDate = { gte: new Date(startDate) };
