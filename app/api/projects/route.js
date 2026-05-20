@@ -51,6 +51,9 @@ export async function POST(request) {
         prodDate: data.prodDate ? new Date(data.prodDate) : null,
         dependencyWith: data.dependencyWith,
         comments: data.comments,
+        progress: data.progress ? parseInt(data.progress) : 0,
+        priority: data.priority || 'Medium',
+        health: data.health || 'On Track',
       }
     });
     return NextResponse.json(project, { status: 201 });
