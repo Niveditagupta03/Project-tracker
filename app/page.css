@@ -96,20 +96,23 @@
   text-align: left;
 }
 
+
 .projects-table th {
-  padding: 1rem;
-  font-size: 0.75rem;
+  padding: 0.75rem 0.6rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-muted);
   font-weight: 600;
   border-bottom: 1px solid var(--border-color);
   background: rgba(0, 0, 0, 0.03);
+  white-space: nowrap;
 }
 
+
 .projects-table td {
-  padding: 1rem;
-  font-size: 0.9rem;
+  padding: 0.75rem 0.6rem;
+  font-size: 0.7rem;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-main);
 }
@@ -136,10 +139,10 @@
 }
 
 .badge {
-  padding: 0.25rem 0.6rem;
+  padding: 0.15rem 0.4rem;
   border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 400;
   display: inline-block;
   letter-spacing: 0.02em;
 }
@@ -221,19 +224,19 @@
 }
 
 .form-group label {
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 500;
   color: var(--text-muted);
 }
 
 .form-group input, .form-group select, .form-group textarea {
-  padding: 0.6rem;
+  padding: 0.4rem 0.6rem;
   border: 1px solid var(--border-color);
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.8);
   color: var(--text-main);
   outline: none;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   transition: all 0.3s;
 }
 
@@ -542,17 +545,16 @@
 
 .dashboard-content {
   flex: 1;
-  padding: 1.5rem;
+  padding: 0.4rem 0.4rem;
   overflow: auto;
 }
 
 /* DASHBOARD GRID & TILES */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 260px;
-  gap: 1.5rem;
+  grid-template-columns: 1fr 220px;
+  gap: 0.5rem;
   align-items: start;
-  min-width: 1100px;
 }
 
 .dashboard-main {
@@ -564,17 +566,17 @@
 .metric-tiles {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .metric-card {
   background: white;
   border: 1px solid #E2E8F0;
   border-radius: 0.75rem;
-  padding: 1.25rem;
+  padding: 0.75rem 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.4rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
@@ -799,30 +801,12 @@
   width: 100%;
 }
 
-.projects-table {
-  width: 100%;
-  border-collapse: collapse;
-}
 
-.projects-table th {
-  text-transform: uppercase;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
-  color: #94A3B8;
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid #F1F5F9;
-}
-
-.projects-table td {
-  padding: 1rem 1.25rem;
-  vertical-align: middle;
-  border-bottom: 1px solid #F1F5F9;
-}
 
 .owner-text {
-  font-weight: 500;
+  font-weight: 400;
   color: #334155;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
 }
 
 .date-cell {
@@ -835,11 +819,11 @@
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  width: 100px;
+  width: auto;
 }
 .progress-text {
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 400;
   color: #1E293B;
 }
 .progress-bar-bg {
@@ -847,7 +831,7 @@
   background: #F1F5F9;
   border-radius: 2px;
   overflow: hidden;
-  width: 100%;
+  width: 50px;
 }
 .progress-bar-fill {
   height: 100%;
@@ -859,10 +843,11 @@
 
 /* Priority Badges */
 .priority-badge {
-  padding: 0.25rem 0.75rem;
+  padding: 0.15rem 0.5rem;
   border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.65rem;
+  font-weight: 400;
+  white-space: nowrap;
 }
 .priority-low { background: #ECFDF5; color: #10B981; }
 .priority-medium { background: #FFFBEB; color: #F59E0B; }
@@ -873,6 +858,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
+  white-space: nowrap;
 }
 .health-dot {
   width: 8px;
@@ -883,8 +869,8 @@
 .dot-warning { background: #F59E0B; }
 .dot-danger { background: #EF4444; }
 .health-text {
-  font-size: 0.8rem;
-  font-weight: 500;
+  font-size: 0.65rem;
+  font-weight: 400;
 }
 .text-success { color: #10B981; }
 .text-warning { color: #F59E0B; }
@@ -901,6 +887,7 @@
   color: #64748B;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
 }
 .pill-btn:hover {
   background: #F8FAFC;
@@ -1199,7 +1186,3 @@
   color: #94A3B8;
 }
 
-.dashboard-content {
-  padding: 2rem;
-  flex: 1;
-}

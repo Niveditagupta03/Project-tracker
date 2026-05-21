@@ -1,4 +1,6 @@
 import './globals.css';
+import './page.css';
+import AppShell from '../components/AppShell';
 
 export const metadata = {
   title: 'Project Tracker | Premium Dashboard',
@@ -10,9 +12,9 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <div className="app-container">
-          <main style={{ padding: '0', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <AppShell>
             {children}
-          </main>
+          </AppShell>
         </div>
       </body>
     </html>

@@ -8,21 +8,45 @@ export async function GET(request) {
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
     const status = searchParams.get('status');
+    const search = searchParams.get('search');
 
     // Build filter conditions
-    const where = {};
+    const andConditions = [];
+
     if (owner) {
-      where.owner = { contains: owner };
+      andConditions.push({ owner: { contains: owner, mode: 'insensitive' } });
     }
     if (status) {
-      where.status = status;
+      andConditions.push({ status: status });
     }
     if (startDate) {
-      where.startDate = { gte: new Date(startDate) };
+      andConditions.push({ startDate: { gte: new Date(startDate) } });
     }
     if (endDate) {
-      where.endDate = { lte: new Date(endDate) };
+      andConditions.push({ endDate: { lte: new Date(endDate) } });
     }
+    
+    if (search) {
+      const searchWords = search.split(/\s+/).filter(word => word.length > 0);
+      
+      searchWords.forEach(word => {
+        andConditions.push({
+          OR: [
+            { title: { contains: word, mode: 'insensitive' } },
+            { owner: { contains: word, mode: 'insensitive' } },
+            { description: { contains: word, mode: 'insensitive' } },
+            { type: { contains: word, mode: 'insensitive' } },
+            { comments: { contains: word, mode: 'insensitive' } },
+            { status: { contains: word, mode: 'insensitive' } },
+          ],
+        });
+      });
+    }
+
+    const where = andConditions.length > 0 ? { AND: andConditions } : {};
+
+    // Debug log to see the query in the server console
+    console.log('Fetching projects with where:', JSON.stringify(where, null, 2));
 
     const projects = await prisma.project.findMany({
       where,
@@ -31,6 +55,7 @@ export async function GET(request) {
 
     return NextResponse.json(projects);
   } catch (error) {
+    console.error('Search error:', error);
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
   }
 }
@@ -58,6 +83,7 @@ export async function POST(request) {
     });
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
+    console.error('Create error:', error);
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
   }
 }
