@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
-  Hexagon, PanelLeft, Search, Plus, Bell, ChevronDown, 
+  Hexagon, Search, Plus, Bell, ChevronDown, 
   LayoutDashboard, Folder, Calendar, Users, BarChart2, 
-  Sparkles, FileText, AlertCircle, Settings, Gem, Moon, ChevronRight, Clock, X
+  Sparkles, FileText, AlertCircle, Settings, Gem, Moon, ChevronRight, Clock, X, LogOut
 } from 'lucide-react';
 
 export default function AppShell({ children }) {
   const router = useRouter();
   const pathname = usePathname();
   
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [availableOwners, setAvailableOwners] = useState([]);
   const [newPersonName, setNewPersonName] = useState('');
@@ -25,9 +26,30 @@ export default function AppShell({ children }) {
   });
 
   useEffect(() => {
+    const loggedUser = localStorage.getItem('project_tracker_user');
+    if (!loggedUser) {
+      if (pathname !== '/login') {
+        router.push('/login');
+      }
+    } else {
+      const parsedUser = JSON.parse(loggedUser);
+      setCurrentUser(parsedUser);
+      if (pathname === '/login') {
+        router.push('/');
+      }
+    }
+  }, [pathname]);
+
+  useEffect(() => {
     fetchOwners();
     
     const handleOpenModal = (e) => {
+      const loggedUser = localStorage.getItem('project_tracker_user');
+      const parsed = loggedUser ? JSON.parse(loggedUser) : null;
+      if (!parsed || parsed.role !== 'admin') {
+        return; // Only admin can create/edit projects
+      }
+
       const project = e.detail?.project;
       if (project) {
         setFormData({
@@ -57,8 +79,18 @@ export default function AppShell({ children }) {
       setShowModal(true);
     };
 
+    const handleOutsideClick = (e) => {
+      if (!e.target.closest('.profile-section')) {
+        setShowProfileDropdown(false);
+      }
+    };
+
     window.addEventListener('open-project-modal', handleOpenModal);
-    return () => window.removeEventListener('open-project-modal', handleOpenModal);
+    document.addEventListener('click', handleOutsideClick);
+    return () => {
+      window.removeEventListener('open-project-modal', handleOpenModal);
+      document.removeEventListener('click', handleOutsideClick);
+    };
   }, []);
 
   const fetchOwners = async () => {
@@ -136,86 +168,113 @@ export default function AppShell({ children }) {
     }
   };
 
+  if (pathname === '/login') {
+    return <div className="login-route-wrapper">{children}</div>;
+  }
+
   return (
     <div className="app-shell" style={{ flexDirection: 'column' }}>
       <header className="top-nav-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', width: '200px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap', width: '25%' }}>
           <div className="logo-icon">
-            <Hexagon size={24} fill="currentColor" />
+            <Hexagon size={20} fill="currentColor" />
           </div>
-          <span className="nav-title">Project Tracker</span>
-          <span className="v2-badge">V2</span>
+          <span className="nav-title" style={{ fontSize: '0.95rem', whiteSpace: 'nowrap' }}>Project Tracker</span>
+          <span className="v2-badge" style={{ fontSize: '0.6rem', padding: '0.1rem 0.3rem' }}>V2</span>
         </div>
         
-        <div className="nav-center" style={{ flex: 1, display: 'flex', justifyContent: 'flex-start', paddingLeft: '1rem' }}>
-          <button 
-            className="icon-btn" 
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)} 
-            style={{ marginRight: '1rem' }}
-            title="Toggle Sidebar"
-          >
-            <PanelLeft size={20} color="#64748B" />
-          </button>
+        <div className="nav-center" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem' }}>
+          <nav className="header-nav">
+            <Link href="/" className={`header-nav-item ${pathname === '/' ? 'active' : ''}`}>
+              <LayoutDashboard size={15} />
+              <span>Dashboard</span>
+            </Link>
+            <Link href="/projects" className={`header-nav-item ${pathname === '/projects' || pathname.startsWith('/project/') ? 'active' : ''}`}>
+              <Folder size={15} />
+              <span>Projects</span>
+            </Link>
+            <Link href="/timeline" className={`header-nav-item ${pathname === '/timeline' ? 'active' : ''}`}>
+              <Clock size={15} />
+              <span>Timeline</span>
+            </Link>
+          </nav>
         </div>
         
         <div className="nav-right">
-          <button className="btn btn-primary" onClick={openNewModal}>
-            <Plus size={16} style={{ marginRight: '6px' }} />
-            New Project
-          </button>
+          {currentUser?.role === 'admin' && (
+            <button className="btn btn-primary" onClick={openNewModal}>
+              <Plus size={16} style={{ marginRight: '6px' }} />
+              New Project
+            </button>
+          )}
           
           <button className="icon-btn notification-btn">
             <Bell size={20} />
             <span className="notification-dot">6</span>
           </button>
           
-          <div className="profile-section">
+          <div className="profile-section" onClick={() => setShowProfileDropdown(!showProfileDropdown)} style={{ position: 'relative', cursor: 'pointer' }}>
             <div className="avatar">
-              <img src="https://ui-avatars.com/api/?name=Admin&background=E2E8F0&color=475569" alt="User" />
+              <img src={currentUser?.avatarUrl || "https://ui-avatars.com/api/?name=Admin&background=E2E8F0&color=475569"} alt="User" />
             </div>
             <div className="profile-info">
-              <span className="profile-name">Admin</span>
-              <span className="profile-role">Super Admin</span>
+              <span className="profile-name">{currentUser?.name || 'Loading...'}</span>
+              <span className="profile-role">
+                {currentUser?.role === 'admin' ? 'Super Admin' : 'Team Member'}
+              </span>
             </div>
             <ChevronDown size={14} className="chevron" />
+
+            {showProfileDropdown && (
+              <div className="profile-dropdown glass-panel" style={{
+                position: 'absolute',
+                top: '110%',
+                right: 0,
+                backgroundColor: 'white',
+                border: '1px solid rgba(0,0,0,0.06)',
+                borderRadius: '0.5rem',
+                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                padding: '0.5rem',
+                zIndex: 200,
+                minWidth: '130px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.25rem'
+              }}>
+                <button 
+                  onClick={() => {
+                    localStorage.removeItem('project_tracker_user');
+                    router.push('/login');
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    background: 'none',
+                    border: 'none',
+                    padding: '0.5rem 0.75rem',
+                    color: '#EF4444',
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    width: '100%',
+                    textAlign: 'left',
+                    borderRadius: '0.35rem',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => e.target.style.background = '#FEF2F2'}
+                  onMouseLeave={(e) => e.target.style.background = 'none'}
+                >
+                  <LogOut size={14} />
+                  <span>Log Out</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
-
+ 
       <div className="content-wrapper" style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <aside className="sidebar" style={{ display: isSidebarOpen ? 'flex' : 'none' }}>
-
-          <nav className="sidebar-nav" style={{ marginTop: '1.5rem' }}>
-            <Link href="/" className={`nav-item ${pathname === '/' ? 'active' : ''}`}>
-              <LayoutDashboard size={18} />
-              <span>Dashboard</span>
-            </Link>
-            <Link href="/projects" className={`nav-item ${pathname === '/projects' ? 'active' : ''}`}>
-              <Folder size={18} />
-              <span>Projects</span>
-              <ChevronDown size={14} className="nav-chevron" />
-            </Link>
-            <a href="#" className="nav-item">
-              <Clock size={18} />
-              <span>Timeline</span>
-            </a>
-            <a href="#" className="nav-item">
-              <BarChart2 size={18} />
-              <span>Reports</span>
-            </a>
-            <a href="#" className="nav-item">
-              <Sparkles size={18} color="#6366F1" />
-              <span>AI Insights</span>
-              <ChevronRight size={14} className="nav-chevron" />
-            </a>
-            <a href="#" className="nav-item">
-              <Settings size={18} />
-              <span>Settings</span>
-            </a>
-          </nav>
-          
-        </aside>
-
         <div className="main-wrapper">
           {children}
         </div>
@@ -296,7 +355,12 @@ export default function AppShell({ children }) {
                 
                 <div className="form-group">
                   <label>Type</label>
-                  <input type="text" name="type" value={formData.type} onChange={handleFormChange} />
+                  <select name="type" value={formData.type} onChange={handleFormChange}>
+                    <option value="">Select Type</option>
+                    <option value="BAU">BAU</option>
+                    <option value="CR/New Requriment">CR/New Requriment</option>
+                    <option value="Support">Support</option>
+                  </select>
                 </div>
                 
                 <div className="form-group">
@@ -352,6 +416,16 @@ export default function AppShell({ children }) {
                 <div className="form-group">
                   <label>Prod Date</label>
                   <input type="date" name="prodDate" value={formData.prodDate} onChange={handleFormChange} />
+                </div>
+
+                <div className="form-group">
+                  <label>Dependency With</label>
+                  <input type="text" name="dependencyWith" value={formData.dependencyWith} onChange={handleFormChange} />
+                </div>
+
+                <div className="form-group col-span-2">
+                  <label>Comments</label>
+                  <textarea name="comments" value={formData.comments} onChange={handleFormChange} rows={2} />
                 </div>
               </div>
               <div className="modal-actions">

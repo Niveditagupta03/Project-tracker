@@ -3,11 +3,9 @@ const prisma = new PrismaClient();
 
 async function main() {
   const projects = await prisma.project.findMany();
-  console.log("All projects in DB:", JSON.stringify(projects, null, 2));
+  console.log(JSON.stringify(projects, null, 2));
 }
 
 main()
-  .catch(e => console.error(e))
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .catch((e) => console.error(e))
+  .finally(() => prisma.$disconnect());

@@ -9,9 +9,14 @@ export default function ProjectDetail({ params }) {
   const router = useRouter();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetchProject();
+    const user = localStorage.getItem('project_tracker_user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
   }, [params.id]);
 
   const fetchProject = async () => {
@@ -116,7 +121,9 @@ export default function ProjectDetail({ params }) {
           <div className="glass-panel tasks-card">
             <div className="card-header">
               <h3>Task Board</h3>
-              <button className="btn btn-secondary btn-sm">Add Task</button>
+              {currentUser?.role === 'admin' && (
+                <button className="btn btn-secondary btn-sm">Add Task</button>
+              )}
             </div>
             <div className="tasks-placeholder">
               <div className="empty-tasks">
@@ -170,22 +177,28 @@ export default function ProjectDetail({ params }) {
 
           <div className="glass-panel timeline-card">
             <h3>Project Milestones</h3>
-            <div className="milestone-list">
-              <div className="milestone-item completed">
+            <div className={`milestone-list ${
+              project.status === 'Completed' ? 'completed-prod' :
+              project.status === 'UAT' ? 'completed-uat' :
+              project.status !== 'Not Started' ? 'completed-start' : ''
+            }`}>
+              <div className={`milestone-item ${project.status !== 'Not Started' ? 'completed' : 'pending'}`}>
                 <div className="milestone-node"></div>
                 <div className="milestone-content">
                   <h4>Project Start</h4>
                   <span>{formatDate(project.startDate)}</span>
                 </div>
               </div>
-              <div className="milestone-item pending">
+              <div className={`milestone-item ${
+                project.status === 'UAT' || project.status === 'Completed' ? 'completed' : 'pending'
+              }`}>
                 <div className="milestone-node"></div>
                 <div className="milestone-content">
                   <h4>UAT Delivery</h4>
                   <span>{formatDate(project.uatDate)}</span>
                 </div>
               </div>
-              <div className="milestone-item pending">
+              <div className={`milestone-item ${project.status === 'Completed' ? 'completed' : 'pending'}`}>
                 <div className="milestone-node"></div>
                 <div className="milestone-content">
                   <h4>Production Go-Live</h4>

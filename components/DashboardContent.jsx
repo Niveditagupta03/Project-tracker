@@ -22,6 +22,14 @@ export default function DashboardContent() {
   });
   const [editingId, setEditingId] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const user = localStorage.getItem('project_tracker_user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
 
   useEffect(() => {
     fetchProjects();
@@ -200,6 +208,118 @@ export default function DashboardContent() {
   const notStartedOffset = 25 - completedPct - inProgressPct;
   const delayedOffset = 25 - completedPct - inProgressPct - notStartedPct;
 
+  // Month-over-month trend calculation
+  const now = new Date();
+  const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
+
+  const projectsThisMonth = allProjects.filter(p => p.createdAt && new Date(p.createdAt) >= thisMonthStart);
+  const projectsLastMonth = allProjects.filter(p => p.createdAt && new Date(p.createdAt) >= lastMonthStart && new Date(p.createdAt) <= lastMonthEnd);
+
+  const calcTrend = (thisMonthArr, lastMonthArr, statusFilter) => {
+    const thisCnt = statusFilter ? thisMonthArr.filter(p => p.status === statusFilter).length : thisMonthArr.length;
+    const lastCnt = statusFilter ? lastMonthArr.filter(p => p.status === statusFilter).length : lastMonthArr.length;
+    const diff = thisCnt - lastCnt;
+    return { diff, isUp: diff >= 0, thisCnt, lastCnt };
+  };
+
+  const totalTrend = calcTrend(projectsThisMonth, projectsLastMonth, null);
+  const inProgressTrend = calcTrend(projectsThisMonth, projectsLastMonth, 'In Progress');
+  const completedTrend = calcTrend(projectsThisMonth, projectsLastMonth, 'Completed');
+  const delayedTrend = calcTrend(projectsThisMonth, projectsLastMonth, 'Delayed');
+
+  const renderTrend = (trend, invertPositive = false) => {
+    const { diff, isUp, lastCnt } = trend;
+    const isGood = invertPositive ? !isUp : isUp;
+    const absDiff = Math.abs(diff);
+    if (lastCnt === 0 && diff === 0) {
+      return <div className="metric-trend" style={{ color: '#94A3B8' }}><span>No data last month</span></div>;
+    }
+    const pct = lastCnt === 0 ? (diff > 0 ? 100 : 0) : Math.round((absDiff / lastCnt) * 100);
+    const label = diff === 0 ? 'No change vs last month' : `${pct}% ${isUp ? 'up' : 'down'} from last month`;
+    return (
+      <div className={`metric-trend ${isGood ? 'trend-up' : 'trend-down'}`}>
+        {isUp ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+        <span>{label}</span>
+      </div>
+    );
+  };
+
+  // Get upcoming deadlines dynamically based on projects
+  const upcomingDeadlines = [];
+  const todayVal = new Date();
+  todayVal.setHours(0, 0, 0, 0);
+
+  allProjects.forEach(project => {
+    if (project.status === 'Completed') return;
+
+    if (project.endDate) {
+      upcomingDeadlines.push({
+        projectName: project.title,
+        milestone: 'End Date',
+        date: new Date(project.endDate),
+        projectId: project.id
+      });
+    }
+    if (project.uatDate) {
+      upcomingDeadlines.push({
+        projectName: project.title,
+        milestone: 'UAT',
+        date: new Date(project.uatDate),
+        projectId: project.id
+      });
+    }
+    if (project.prodDate) {
+      upcomingDeadlines.push({
+        projectName: project.title,
+        milestone: 'Production',
+        date: new Date(project.prodDate),
+        projectId: project.id
+      });
+    }
+  });
+
+  // Sort by date (ascending)
+  upcomingDeadlines.sort((a, b) => a.date - b.date);
+
+  const displayDeadlines = upcomingDeadlines.slice(0, 3);
+
+  const getDeadlineBadge = (date) => {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const diffTime = d.getTime() - todayVal.getTime();
+    const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      const absDays = Math.abs(diffDays);
+      return {
+        text: `${absDays}d overdue`,
+        className: 'red-badge'
+      };
+    } else if (diffDays === 0) {
+      return {
+        text: 'Today',
+        className: 'red-badge'
+      };
+    } else if (diffDays === 1) {
+      return {
+        text: 'Tomorrow',
+        className: 'orange-badge'
+      };
+    } else if (diffDays <= 7) {
+      return {
+        text: `In ${diffDays}d`,
+        className: 'orange-badge'
+      };
+    } else {
+      return {
+        text: `In ${diffDays}d`,
+        className: 'purple-badge'
+      };
+    }
+  };
+
   return (
     <div className="dashboard-content">
       <div className="dashboard-grid">
@@ -213,10 +333,7 @@ export default function DashboardContent() {
                 </div>
               </div>
               <div className="metric-value">{allProjects.length}</div>
-              <div className="metric-trend trend-up">
-                <TrendingUp size={12} />
-                <span>12% from last month</span>
-              </div>
+              {renderTrend(totalTrend)}
             </div>
 
             <div className={`metric-card ${filters.status === 'In Progress' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'In Progress' }))}>
@@ -227,10 +344,7 @@ export default function DashboardContent() {
                 </div>
               </div>
               <div className="metric-value">{allProjects.filter(p => p.status === 'In Progress').length}</div>
-              <div className="metric-trend trend-up">
-                <TrendingUp size={12} />
-                <span>8% from last month</span>
-              </div>
+              {renderTrend(inProgressTrend)}
             </div>
 
             <div className={`metric-card ${filters.status === 'Completed' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'Completed' }))}>
@@ -241,10 +355,7 @@ export default function DashboardContent() {
                 </div>
               </div>
               <div className="metric-value">{allProjects.filter(p => p.status === 'Completed').length}</div>
-              <div className="metric-trend trend-up">
-                <TrendingUp size={12} />
-                <span>20% from last month</span>
-              </div>
+              {renderTrend(completedTrend)}
             </div>
 
             <div className={`metric-card ${filters.status === 'Delayed' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'Delayed' }))}>
@@ -255,10 +366,7 @@ export default function DashboardContent() {
                 </div>
               </div>
               <div className="metric-value">{allProjects.filter(p => p.status === 'Delayed').length}</div>
-              <div className="metric-trend trend-down">
-                <TrendingDown size={12} />
-                <span>5% from last month</span>
-              </div>
+              {renderTrend(delayedTrend, true)}
             </div>
           </div>
 
@@ -349,7 +457,7 @@ export default function DashboardContent() {
                     <th>UAT DATE</th>
                     <th>PROD DATE</th>
                     <th>HEALTH</th>
-                    <th style={{ width: '40px' }}></th>
+                    {currentUser?.role === 'admin' && <th style={{ width: '40px' }}></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -401,21 +509,23 @@ export default function DashboardContent() {
                           </span>
                         </div>
                       </td>
-                      <td className="actions-cell">
-                        <button className="icon-btn" onClick={(e) => { e.stopPropagation(); toggleDropdown(project.id); }}>
-                          <MoreVertical size={16} />
-                        </button>
-                        {activeDropdown === project.id && (
-                          <div className="action-dropdown glass-panel">
-                            <button onClick={(e) => { e.stopPropagation(); openEditModal(project); }}>
-                              <Edit2 size={14} /> Edit
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }} className="text-danger">
-                              <Trash2 size={14} /> Delete
-                            </button>
-                          </div>
-                        )}
-                      </td>
+                      {currentUser?.role === 'admin' && (
+                        <td className="actions-cell">
+                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); toggleDropdown(project.id); }}>
+                            <MoreVertical size={16} />
+                          </button>
+                          {activeDropdown === project.id && (
+                            <div className="action-dropdown glass-panel">
+                              <button onClick={(e) => { e.stopPropagation(); openEditModal(project); }}>
+                                <Edit2 size={14} /> Edit
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }} className="text-danger">
+                                <Trash2 size={14} /> Delete
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -451,32 +561,32 @@ export default function DashboardContent() {
           <div className="deadlines-widget">
             <div className="widget-header">
               <h3>Upcoming Deadlines</h3>
-              <a href="#">View all</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); router.push('/projects'); }}>View all</a>
             </div>
             
-            <div className="deadline-item">
-              <div className="deadline-info">
-                <span className="deadline-name">Client Portal - UAT</span>
-                <span className="deadline-date">20 May 2026</span>
+            {displayDeadlines.length > 0 ? (
+              displayDeadlines.map((item, idx) => {
+                const badgeInfo = getDeadlineBadge(item.date);
+                return (
+                  <div 
+                    key={idx} 
+                    className="deadline-item" 
+                    onClick={() => router.push(`/project/${item.projectId}`)} 
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="deadline-info">
+                      <span className="deadline-name">{item.projectName} - {item.milestone}</span>
+                      <span className="deadline-date">{formatTableDate(item.date)}</span>
+                    </div>
+                    <span className={`deadline-badge ${badgeInfo.className}`}>{badgeInfo.text}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="kanban-empty-state" style={{ padding: '1rem 0' }}>
+                No upcoming deadlines
               </div>
-              <span className="deadline-badge orange-badge">In 3 days</span>
-            </div>
-            
-            <div className="deadline-item">
-              <div className="deadline-info">
-                <span className="deadline-name">HRMS - Production</span>
-                <span className="deadline-date">29 May 2026</span>
-              </div>
-              <span className="deadline-badge red-badge">In 12 days</span>
-            </div>
-            
-            <div className="deadline-item">
-              <div className="deadline-info">
-                <span className="deadline-name">Data Platform - End Date</span>
-                <span className="deadline-date">19 Jun 2026</span>
-              </div>
-              <span className="deadline-badge purple-badge">In 33 days</span>
-            </div>
+            )}
           </div>
 
           {/* PROJECT PROGRESS OVERVIEW WIDGET */}
