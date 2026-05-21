@@ -294,32 +294,17 @@ export default function DashboardContent() {
                 </div>
               </div>
               
-              <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0, maxWidth: '100%', overflow: 'hidden' }}>
+              <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
                 <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Status</label>
-                <div className="status-pills" style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '2px', maxWidth: '100%' }}>
-                  {[
-                    { label: 'All', value: '' },
-                    { label: 'Not Started', value: 'Not Started' },
-                    { label: 'In Progress', value: 'In Progress' },
-                    { label: 'UAT', value: 'UAT' },
-                    { label: 'Completed', value: 'Completed' },
-                    { label: 'Delayed', value: 'Delayed' },
-                    { label: 'Blocked', value: 'Blocked' }
-                  ].map(opt => (
-                    <button
-                      key={opt.label}
-                      type="button"
-                      className={`pill-btn ${filters.status === opt.value ? 'pill-active' : ''}`}
-                      onClick={() => setFilters(prev => ({ ...prev, status: opt.value }))}
-                      style={{
-                        padding: '0.3rem 0.65rem',
-                        fontSize: '0.75rem',
-                        borderRadius: '0.75rem'
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+                <div className="filter-group">
+                  <select name="status" value={filters.status} onChange={handleFilterChange} className="filter-input" style={{ appearance: 'none', minWidth: '90px', fontSize: '0.8rem', padding: '0.4rem 1.6rem 0.4rem 0.6rem' }}>
+                    <option value="">All</option>
+                    <option value="Not Started">Not Started</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Blocked">Blocked</option>
+                  </select>
+                  <ChevronDown size={12} className="icon-right" style={{ right: '6px' }} />
                 </div>
               </div>
               

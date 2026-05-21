@@ -307,6 +307,7 @@ export default function AppShell({ children }) {
                     <option value="UAT">UAT</option>
                     <option value="Completed">Completed</option>
                     <option value="Delayed">Delayed</option>
+                    <option value="Blocked">Blocked</option>
                   </select>
                 </div>
 
