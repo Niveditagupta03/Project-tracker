@@ -140,14 +140,12 @@
 }
 
 .project-detail-container .detail-card, 
-.project-detail-container .tasks-card, 
 .project-detail-container .summary-card, 
 .project-detail-container .timeline-card {
   padding: 1.5rem;
 }
 
 .project-detail-container .detail-card h3, 
-.project-detail-container .tasks-card h3, 
 .project-detail-container .summary-card h3, 
 .project-detail-container .timeline-card h3 {
   font-size: 1.1rem;
@@ -205,34 +203,7 @@
   margin: 0;
 }
 
-/* TASKS PLACEHOLDER */
-.project-detail-container .tasks-placeholder {
-  background: #F8FAFC;
-  border: 1px dashed #CBD5E1;
-  border-radius: 0.75rem;
-  padding: 3rem 1rem;
-  display: flex;
-  justify-content: center;
-}
 
-.project-detail-container .empty-tasks {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.5rem;
-}
-
-.project-detail-container .empty-tasks p {
-  margin: 0;
-  font-weight: 600;
-  color: #475569;
-}
-
-.project-detail-container .empty-tasks span {
-  font-size: 0.85rem;
-  color: #94A3B8;
-}
 
 /* KEY METRICS SUMMARY CARD */
 .project-detail-container .metric-row {

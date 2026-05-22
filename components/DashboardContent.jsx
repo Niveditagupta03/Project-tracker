@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import * as XLSX from 'xlsx';
 import '../app/page.css';
-import { Plus, Search, Calendar, MoreVertical, Edit2, Trash2, Download, ChevronDown, Folder, Clock, Activity, CheckCircle2, TrendingUp, TrendingDown, Bot, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Calendar, MoreVertical, Edit2, Trash2, Download, ChevronDown, Folder, Clock, Activity, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
 
 export default function DashboardContent() {
   const router = useRouter();
@@ -23,6 +23,8 @@ export default function DashboardContent() {
   const [editingId, setEditingId] = useState(null);
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [activities, setActivities] = useState([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
 
   useEffect(() => {
     const user = localStorage.getItem('project_tracker_user');
@@ -35,11 +37,13 @@ export default function DashboardContent() {
     fetchProjects();
     fetchAllProjects();
     fetchOwners();
+    fetchActivities();
 
     const handleProjectUpdated = () => {
       fetchProjects();
       fetchAllProjects();
       fetchOwners();
+      fetchActivities();
     };
 
     const handleGlobalSearch = (e) => {
@@ -92,9 +96,16 @@ export default function DashboardContent() {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this project?")) {
       try {
-        const res = await fetch(`/api/projects/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/api/projects/${id}`, { 
+          method: 'DELETE',
+          headers: {
+            'x-user-name': currentUser?.name || 'Someone',
+            'x-user-role': currentUser?.role || 'user'
+          }
+        });
         if (res.ok) {
           fetchProjects();
+          window.dispatchEvent(new Event('project-updated'));
         }
       } catch (error) {
         console.error('Failed to delete project', error);
@@ -134,6 +145,36 @@ export default function DashboardContent() {
     } catch (error) {
       console.error('Failed to fetch all projects', error);
     }
+  };
+
+  const fetchActivities = async () => {
+    try {
+      const res = await fetch('/api/activities');
+      if (res.ok) {
+        const data = await res.json();
+        setActivities(data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch activities:', err);
+    } finally {
+      setActivitiesLoading(false);
+    }
+  };
+
+  const formatActivityTime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
   };
 
   const handleFilterChange = (e) => {
@@ -457,7 +498,7 @@ export default function DashboardContent() {
                     <th>UAT DATE</th>
                     <th>PROD DATE</th>
                     <th>HEALTH</th>
-                    {currentUser?.role === 'admin' && <th style={{ width: '40px' }}></th>}
+                    {currentUser && <th style={{ width: '40px' }}></th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -503,13 +544,13 @@ export default function DashboardContent() {
                       <td className="date-cell">{formatTableDate(project.prodDate)}</td>
                       <td>
                         <div className="health-cell">
-                          <span className={`health-dot ${project.health === 'On Track' ? 'dot-success' : project.health === 'At Risk' ? 'dot-warning' : 'dot-danger'}`}></span>
-                          <span className={`health-text ${project.health === 'On Track' ? 'text-success' : project.health === 'At Risk' ? 'text-warning' : 'text-danger'}`}>
+                          <span className={`health-dot ${(project.health || 'On Track') === 'On Track' ? 'dot-success' : project.health === 'At Risk' ? 'dot-warning' : 'dot-danger'}`}></span>
+                          <span className={`health-text ${(project.health || 'On Track') === 'On Track' ? 'text-success' : project.health === 'At Risk' ? 'text-warning' : 'text-danger'}`}>
                             {project.health || 'On Track'}
                           </span>
                         </div>
                       </td>
-                      {currentUser?.role === 'admin' && (
+                      {currentUser && (
                         <td className="actions-cell">
                           <button className="icon-btn" onClick={(e) => { e.stopPropagation(); toggleDropdown(project.id); }}>
                             <MoreVertical size={16} />
@@ -519,9 +560,11 @@ export default function DashboardContent() {
                               <button onClick={(e) => { e.stopPropagation(); openEditModal(project); }}>
                                 <Edit2 size={14} /> Edit
                               </button>
-                              <button onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }} className="text-danger">
-                                <Trash2 size={14} /> Delete
-                              </button>
+                              {currentUser.role === 'admin' && (
+                                <button onClick={(e) => { e.stopPropagation(); handleDelete(project.id); }} className="text-danger">
+                                  <Trash2 size={14} /> Delete
+                                </button>
+                              )}
                             </div>
                           )}
                         </td>
@@ -535,60 +578,6 @@ export default function DashboardContent() {
         </div>
 
         <div className="dashboard-right">
-          <div className="ai-assistant-card">
-            <div className="ai-header">
-              <Bot size={16} color="#6366F1" />
-              <span>AI Project Assistant</span>
-            </div>
-            
-            <div className="ai-warning-box">
-              <div className="warning-title">
-                <AlertTriangle size={14} color="#F59E0B" />
-                <span>UAT may be delayed by</span>
-              </div>
-              <div className="warning-days">3 days</div>
-              <div className="warning-impact">Impact: 2 dependent projects</div>
-              <button className="btn btn-secondary ai-btn">View Insight</button>
-            </div>
-            
-            <div className="ai-dots">
-              <span className="dot active"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
-            </div>
-          </div>
-
-          <div className="deadlines-widget">
-            <div className="widget-header">
-              <h3>Upcoming Deadlines</h3>
-              <a href="#" onClick={(e) => { e.preventDefault(); router.push('/projects'); }}>View all</a>
-            </div>
-            
-            {displayDeadlines.length > 0 ? (
-              displayDeadlines.map((item, idx) => {
-                const badgeInfo = getDeadlineBadge(item.date);
-                return (
-                  <div 
-                    key={idx} 
-                    className="deadline-item" 
-                    onClick={() => router.push(`/project/${item.projectId}`)} 
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="deadline-info">
-                      <span className="deadline-name">{item.projectName} - {item.milestone}</span>
-                      <span className="deadline-date">{formatTableDate(item.date)}</span>
-                    </div>
-                    <span className={`deadline-badge ${badgeInfo.className}`}>{badgeInfo.text}</span>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="kanban-empty-state" style={{ padding: '1rem 0' }}>
-                No upcoming deadlines
-              </div>
-            )}
-          </div>
-
           {/* PROJECT PROGRESS OVERVIEW WIDGET */}
           <div className="progress-overview-widget glass-panel">
             <div className="widget-header">
@@ -659,6 +648,69 @@ export default function DashboardContent() {
                   <div className="legend-value">{delayedCount} <span className="legend-pct">({delayedPct.toFixed(1)}%)</span></div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="deadlines-widget">
+            <div className="widget-header">
+              <h3>Upcoming Deadlines</h3>
+              <a href="#" onClick={(e) => { e.preventDefault(); router.push('/projects'); }}>View all</a>
+            </div>
+            
+            {displayDeadlines.length > 0 ? (
+              displayDeadlines.map((item, idx) => {
+                const badgeInfo = getDeadlineBadge(item.date);
+                return (
+                  <div 
+                    key={idx} 
+                    className="deadline-item" 
+                    onClick={() => router.push(`/project/${item.projectId}`)} 
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <div className="deadline-info">
+                      <span className="deadline-name">{item.projectName} - {item.milestone}</span>
+                      <span className="deadline-date">{formatTableDate(item.date)}</span>
+                    </div>
+                    <span className={`deadline-badge ${badgeInfo.className}`}>{badgeInfo.text}</span>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="kanban-empty-state" style={{ padding: '1rem 0' }}>
+                No upcoming deadlines
+              </div>
+            )}
+          </div>
+
+          {/* RECENT ACTIVITY WIDGET */}
+          <div className="recent-activity-widget glass-panel">
+            <div className="widget-header">
+              <h3>Recent Activity</h3>
+            </div>
+            
+            <div className="activity-list">
+              {activitiesLoading ? (
+                <div className="activity-loading">Loading activities...</div>
+              ) : activities.length > 0 ? (
+                activities.map((act) => (
+                  <div key={act.id} className="activity-item">
+                    <div className="activity-user-avatar">
+                      {act.userName ? act.userName.substring(0, 2).toUpperCase() : '?'}
+                    </div>
+                    <div className="activity-details-box">
+                      <p className="activity-text">
+                        <span className="activity-user-name">{act.userName}</span>{' '}
+                        {act.details}
+                      </p>
+                      <span className="activity-time">{formatActivityTime(act.createdAt)}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="kanban-empty-state" style={{ padding: '1rem 0' }}>
+                  No recent activities
+                </div>
+              )}
             </div>
           </div>
         </div>

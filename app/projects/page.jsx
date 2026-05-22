@@ -8,6 +8,14 @@ export default function ProjectsPage() {
   const router = useRouter();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const user = localStorage.getItem('project_tracker_user');
+    if (user) {
+      setCurrentUser(JSON.parse(user));
+    }
+  }, []);
 
   useEffect(() => {
     fetchProjects();
@@ -64,9 +72,11 @@ export default function ProjectsPage() {
             <h2>Projects Board</h2>
             <p>Manage and track all your ongoing projects</p>
           </div>
-          <button className="btn btn-primary" onClick={openNewModal}>
-            <Plus size={16} style={{ marginRight: '6px' }} /> Create Project
-          </button>
+          {currentUser?.role === 'admin' && (
+            <button className="btn btn-primary" onClick={openNewModal}>
+              <Plus size={16} style={{ marginRight: '6px' }} /> Create Project
+            </button>
+          )}
         </div>
         
         <div className="kanban-board">

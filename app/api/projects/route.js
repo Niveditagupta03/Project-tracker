@@ -65,6 +65,9 @@ export async function GET(request) {
 export async function POST(request) {
   try {
     const data = await request.json();
+    const userName = request.headers.get('x-user-name') || 'Someone';
+    const userRole = request.headers.get('x-user-role') || 'user';
+
     const project = await prisma.project.create({
       data: {
         title: data.title,
@@ -83,6 +86,17 @@ export async function POST(request) {
         health: data.health || 'On Track',
       }
     });
+
+    // Log activity
+    await prisma.activity.create({
+      data: {
+        userName,
+        userRole,
+        actionType: 'CREATE',
+        details: `added the project "${project.title}"`,
+      }
+    });
+
     return NextResponse.json(project, { status: 201 });
   } catch (error) {
     console.error('Create error:', error);

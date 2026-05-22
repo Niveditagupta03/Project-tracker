@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Hexagon, User, Lock, Shield, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Hexagon, User, Shield, ArrowRight, ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import './login.css';
 
 export default function LoginPage() {
   const router = useRouter();
+  const [isFlipped, setIsFlipped] = useState(false);
   const [activeTab, setActiveTab] = useState('admin'); // 'admin' or 'reportee'
   const [owners, setOwners] = useState([]);
   const [selectedOwner, setSelectedOwner] = useState('');
@@ -38,12 +39,22 @@ export default function LoginPage() {
     }
   };
 
+  const handleRoleSelect = (role) => {
+    setActiveTab(role);
+    setError('');
+    setIsFlipped(true);
+  };
+
+  const handleBackToRoles = () => {
+    setIsFlipped(false);
+    setError('');
+  };
+
   const handleAdminLogin = (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    // Basic Validation
     setTimeout(() => {
       if (adminUsername === 'admin' && adminPassword === 'admin') {
         const userData = {
@@ -88,120 +99,163 @@ export default function LoginPage() {
       <div className="login-glow-1"></div>
       <div className="login-glow-2"></div>
       
-      <div className="login-card glass-panel">
-        <div className="login-header">
-          <div className="login-logo">
-            <Hexagon size={32} fill="currentColor" />
-          </div>
-          <h1>Project Tracker</h1>
-          <span className="v2-tag">V2</span>
-          <p className="login-subtitle">Sign in to manage and track portfolio deliveries</p>
-        </div>
+      <div className={`login-card-perspective ${isFlipped ? 'flipped' : ''}`}>
+        <div className="login-card-inner">
+          
+          {/* FRONT SIDE - Role Selection */}
+          <div className="login-card-front glass-panel">
+            <div className="login-header">
+              <div className="login-logo-animated">
+                <Hexagon size={36} fill="currentColor" className="logo-icon" />
+              </div>
+              <h1>Project Tracker</h1>
+              <span className="v2-tag">V2</span>
+              <p className="login-subtitle">Sign in to manage and track portfolio deliveries</p>
+            </div>
 
-        <div className="login-tabs">
-          <button 
-            className={`tab-btn ${activeTab === 'admin' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('admin'); setError(''); }}
-          >
-            <Shield size={16} />
-            <span>Administrator</span>
-          </button>
-          <button 
-            className={`tab-btn ${activeTab === 'reportee' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('reportee'); setError(''); }}
-          >
-            <User size={16} />
-            <span>Team Member</span>
-          </button>
-        </div>
-
-        {error && (
-          <div className="login-error-box">
-            <AlertCircle size={16} />
-            <span>{error}</span>
-          </div>
-        )}
-
-        {activeTab === 'admin' ? (
-          <form onSubmit={handleAdminLogin} className="login-form">
-            <div className="form-group">
-              <label>Username</label>
-              <input 
-                type="text" 
-                value={adminUsername}
-                onChange={(e) => setAdminUsername(e.target.value)}
-                required
-                placeholder="Enter admin username"
-              />
+            <div className="role-selection-prompt">
+              <h2>Select Login Access</h2>
+              <p>Choose your access role to proceed to authentication</p>
             </div>
             
-            <div className="form-group">
-              <label>Password</label>
-              <div className="password-input-wrapper">
-                <input 
-                  type={showPassword ? 'text' : 'password'} 
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  required
-                  placeholder="Enter admin password"
-                />
-                <button 
-                  type="button" 
-                  className="password-toggle"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
+            <div className="role-selection-container">
+              <button 
+                type="button" 
+                className="role-select-card admin-card"
+                onClick={() => handleRoleSelect('admin')}
+              >
+                <div className="role-icon-wrapper admin-icon">
+                  <Shield size={24} />
+                </div>
+                <div className="role-info">
+                  <h3>Administrator</h3>
+                  <p>Create & modify projects, manage schedules</p>
+                </div>
+                <ArrowRight size={18} className="arrow-icon" />
+              </button>
+              
+              <button 
+                type="button" 
+                className="role-select-card member-card"
+                onClick={() => handleRoleSelect('reportee')}
+              >
+                <div className="role-icon-wrapper member-icon">
+                  <User size={24} />
+                </div>
+                <div className="role-info">
+                  <h3>Team Member</h3>
+                  <p>View assignments, update task status & timelines</p>
+                </div>
+                <ArrowRight size={18} className="arrow-icon" />
+              </button>
+            </div>
+          </div>
+          
+          {/* BACK SIDE - Login Form */}
+          <div className="login-card-back glass-panel">
+            <div className="back-header">
+              <button type="button" className="back-arrow-btn" onClick={handleBackToRoles} aria-label="Go back">
+                <ArrowLeft size={16} />
+                <span>Back</span>
+              </button>
+              <div className="back-title-wrapper">
+                <h2>{activeTab === 'admin' ? 'Administrator Login' : 'Team Member Login'}</h2>
+                <p className="back-subtitle">
+                  {activeTab === 'admin' ? 'Verify system credentials' : 'Select or register your name'}
+                </p>
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
-              {loading ? 'Authenticating...' : 'Sign In as Admin'}
-              {!loading && <ArrowRight size={16} style={{ marginLeft: '8px' }} />}
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleReporteeLogin} className="login-form">
-            <div className="form-group">
-              <label>Select Team Member</label>
-              <select 
-                value={selectedOwner} 
-                onChange={(e) => {
-                  setSelectedOwner(e.target.value);
-                  if (e.target.value) setCustomName(''); // clear custom name if dropdown selected
-                }}
-                disabled={owners.length === 0}
-              >
-                {owners.length === 0 ? (
-                  <option value="">No registered members</option>
-                ) : (
-                  owners.map(owner => (
-                    <option key={owner} value={owner}>{owner}</option>
-                  ))
-                )}
-              </select>
-            </div>
+            {error && (
+              <div className="login-error-box">
+                <AlertCircle size={16} />
+                <span>{error}</span>
+              </div>
+            )}
 
-            <div className="divider-text">
-              <span>OR</span>
-            </div>
+            {activeTab === 'admin' ? (
+              <form onSubmit={handleAdminLogin} className="login-form">
+                <div className="form-group">
+                  <label>Username</label>
+                  <input 
+                    type="text" 
+                    value={adminUsername}
+                    onChange={(e) => setAdminUsername(e.target.value)}
+                    required
+                    placeholder="Enter admin username"
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label>Password</label>
+                  <div className="password-input-wrapper">
+                    <input 
+                      type={showPassword ? 'text' : 'password'} 
+                      value={adminPassword}
+                      onChange={(e) => setAdminPassword(e.target.value)}
+                      required
+                      placeholder="Enter admin password"
+                    />
+                    <button 
+                      type="button" 
+                      className="password-toggle"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                  </div>
+                </div>
 
-            <div className="form-group">
-              <label>Enter New Name</label>
-              <input 
-                type="text" 
-                value={customName}
-                onChange={(e) => setCustomName(e.target.value)}
-                placeholder="Type your name to create new session"
-              />
-            </div>
+                <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
+                  {loading ? 'Authenticating...' : 'Sign In as Admin'}
+                  {!loading && <ArrowRight size={16} style={{ marginLeft: '8px' }} />}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleReporteeLogin} className="login-form">
+                <div className="form-group">
+                  <label>Select Your Name</label>
+                  <select 
+                    value={selectedOwner} 
+                    onChange={(e) => {
+                      setSelectedOwner(e.target.value);
+                      if (e.target.value) setCustomName('');
+                    }}
+                    disabled={owners.length === 0}
+                  >
+                    {owners.length === 0 ? (
+                      <option value="">No registered members</option>
+                    ) : (
+                      owners.map(owner => (
+                        <option key={owner} value={owner}>{owner}</option>
+                      ))
+                    )}
+                  </select>
+                </div>
 
-            <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
-              {loading ? 'Logging in...' : 'Sign In as Team Member'}
-              {!loading && <ArrowRight size={16} style={{ marginLeft: '8px' }} />}
-            </button>
-          </form>
-        )}
+                <div className="divider-text">
+                  <span>OR CREATE NEW</span>
+                </div>
+
+                <div className="form-group">
+                  <label>Enter New Name</label>
+                  <input 
+                    type="text" 
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="Type your name to sign in"
+                  />
+                </div>
+
+                <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
+                  {loading ? 'Logging in...' : 'Sign In as Team Member'}
+                  {!loading && <ArrowRight size={16} style={{ marginLeft: '8px' }} />}
+                </button>
+              </form>
+            )}
+          </div>
+          
+        </div>
       </div>
     </div>
   );

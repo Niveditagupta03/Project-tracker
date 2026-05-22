@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, Clock, Activity, AlertCircle, FileText, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Activity, AlertCircle } from 'lucide-react';
 import './project.css';
 
 export default function ProjectDetail({ params }) {
@@ -86,8 +86,8 @@ export default function ProjectDetail({ params }) {
             <p className="project-type">{project.type}</p>
           </div>
           <div className="project-health">
-            <span className={`health-dot ${project.health === 'On Track' ? 'dot-success' : project.health === 'At Risk' ? 'dot-warning' : 'dot-danger'}`}></span>
-            <span className={`health-text ${project.health === 'On Track' ? 'text-success' : project.health === 'At Risk' ? 'text-warning' : 'text-danger'}`}>
+            <span className={`health-dot ${(project.health || 'On Track') === 'On Track' ? 'dot-success' : project.health === 'At Risk' ? 'dot-warning' : 'dot-danger'}`}></span>
+            <span className={`health-text ${(project.health || 'On Track') === 'On Track' ? 'text-success' : project.health === 'At Risk' ? 'text-warning' : 'text-danger'}`}>
               {project.health || 'On Track'}
             </span>
           </div>
@@ -114,22 +114,6 @@ export default function ProjectDetail({ params }) {
               <div className="info-item col-span-2">
                 <span className="info-label">Comments</span>
                 <p className="info-text">{project.comments || 'No comments.'}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="glass-panel tasks-card">
-            <div className="card-header">
-              <h3>Task Board</h3>
-              {currentUser?.role === 'admin' && (
-                <button className="btn btn-secondary btn-sm">Add Task</button>
-              )}
-            </div>
-            <div className="tasks-placeholder">
-              <div className="empty-tasks">
-                <CheckCircle2 size={32} color="#CBD5E1" />
-                <p>No tasks created yet.</p>
-                <span>Break this project down into actionable tasks.</span>
               </div>
             </div>
           </div>

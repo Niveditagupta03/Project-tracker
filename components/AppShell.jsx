@@ -25,6 +25,59 @@ export default function AppShell({ children }) {
     progress: 0, priority: 'Medium', health: 'On Track'
   });
 
+  const [activities, setActivities] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [lastReadTimestamp, setLastReadTimestamp] = useState(null);
+
+  const fetchActivities = async () => {
+    try {
+      const res = await fetch('/api/activities');
+      if (res.ok) {
+        const data = await res.json();
+        setActivities(data);
+        
+        const stored = localStorage.getItem('project_tracker_last_read_activities');
+        if (!stored) {
+          setUnreadCount(data.length);
+        } else {
+          const lastReadTime = new Date(stored).getTime();
+          const unread = data.filter(act => new Date(act.createdAt).getTime() > lastReadTime).length;
+          setUnreadCount(unread);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch activities:', error);
+    }
+  };
+
+  const toggleNotifications = () => {
+    const nextState = !showNotifications;
+    setShowNotifications(nextState);
+    if (nextState) {
+      const nowStr = new Date().toISOString();
+      localStorage.setItem('project_tracker_last_read_activities', nowStr);
+      setLastReadTimestamp(nowStr);
+      setUnreadCount(0);
+    }
+  };
+
+  const formatActivityTime = (dateStr) => {
+    if (!dateStr) return '';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    if (diffHours < 24) return `${diffHours}h ago`;
+    if (diffDays === 1) return 'Yesterday';
+    return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  };
+
   useEffect(() => {
     const loggedUser = localStorage.getItem('project_tracker_user');
     if (!loggedUser) {
@@ -38,19 +91,27 @@ export default function AppShell({ children }) {
         router.push('/');
       }
     }
+
+    const stored = localStorage.getItem('project_tracker_last_read_activities');
+    if (stored) {
+      setLastReadTimestamp(stored);
+    }
   }, [pathname]);
 
   useEffect(() => {
     fetchOwners();
+    fetchActivities();
+
+    const interval = setInterval(fetchActivities, 30000);
     
     const handleOpenModal = (e) => {
       const loggedUser = localStorage.getItem('project_tracker_user');
       const parsed = loggedUser ? JSON.parse(loggedUser) : null;
-      if (!parsed || parsed.role !== 'admin') {
-        return; // Only admin can create/edit projects
-      }
-
       const project = e.detail?.project;
+      
+      if (!parsed || (parsed.role !== 'admin' && !project)) {
+        return; // Only admin can create new projects, but both can edit existing ones
+      }
       if (project) {
         setFormData({
           id: project.id,
@@ -83,13 +144,23 @@ export default function AppShell({ children }) {
       if (!e.target.closest('.profile-section')) {
         setShowProfileDropdown(false);
       }
+      if (!e.target.closest('.notification-wrapper')) {
+        setShowNotifications(false);
+      }
+    };
+
+    const handleProjectUpdated = () => {
+      fetchActivities();
     };
 
     window.addEventListener('open-project-modal', handleOpenModal);
+    window.addEventListener('project-updated', handleProjectUpdated);
     document.addEventListener('click', handleOutsideClick);
     return () => {
       window.removeEventListener('open-project-modal', handleOpenModal);
+      window.removeEventListener('project-updated', handleProjectUpdated);
       document.removeEventListener('click', handleOutsideClick);
+      clearInterval(interval);
     };
   }, []);
 
@@ -147,13 +218,21 @@ export default function AppShell({ children }) {
       if (formData.id) {
         res = await fetch(`/api/projects/${formData.id}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-user-name': currentUser?.name || 'Someone',
+            'x-user-role': currentUser?.role || 'user'
+          },
           body: JSON.stringify(payload)
         });
       } else {
         res = await fetch('/api/projects', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'x-user-name': currentUser?.name || 'Someone',
+            'x-user-role': currentUser?.role || 'user'
+          },
           body: JSON.stringify(payload)
         });
       }
@@ -208,10 +287,64 @@ export default function AppShell({ children }) {
             </button>
           )}
           
-          <button className="icon-btn notification-btn">
-            <Bell size={20} />
-            <span className="notification-dot">6</span>
-          </button>
+          <div className="notification-wrapper">
+            <button className="icon-btn notification-btn" onClick={toggleNotifications}>
+              <Bell size={20} />
+              {unreadCount > 0 && <span className="notification-dot">{unreadCount}</span>}
+            </button>
+
+            {showNotifications && (
+              <div className="notifications-dropdown glass-panel">
+                <div className="notifications-header">
+                  <h3>Notifications</h3>
+                  {unreadCount > 0 && (
+                    <button 
+                      className="notifications-clear-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const nowStr = new Date().toISOString();
+                        localStorage.setItem('project_tracker_last_read_activities', nowStr);
+                        setLastReadTimestamp(nowStr);
+                        setUnreadCount(0);
+                      }}
+                    >
+                      Mark all as read
+                    </button>
+                  )}
+                </div>
+                <div className="notifications-list">
+                  {activities.length > 0 ? (
+                    activities.slice(0, 5).map((act) => {
+                      const isUnread = !lastReadTimestamp || 
+                        new Date(act.createdAt).getTime() > new Date(lastReadTimestamp).getTime();
+                      return (
+                        <div 
+                          key={act.id} 
+                          className={`notification-item ${isUnread ? 'unread' : ''}`}
+                          onClick={() => setShowNotifications(false)}
+                        >
+                          <div className="notification-avatar">
+                            {act.userName ? act.userName.substring(0, 2).toUpperCase() : '?'}
+                          </div>
+                          <div className="notification-content">
+                            <p className="notification-text">
+                              <span className="notification-user">{act.userName}</span>{' '}
+                              {act.details}
+                            </p>
+                            <span className="notification-time">{formatActivityTime(act.createdAt)}</span>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="notification-empty">
+                      No notifications yet
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           
           <div className="profile-section" onClick={() => setShowProfileDropdown(!showProfileDropdown)} style={{ position: 'relative', cursor: 'pointer' }}>
             <div className="avatar">
@@ -284,7 +417,7 @@ export default function AppShell({ children }) {
         <div className="modal-overlay">
           <div className="modal-content glass-panel">
             <div className="modal-header">
-              <h2>Add New Project</h2>
+              <h2>{formData.id ? 'Edit Project' : 'Add New Project'}</h2>
               <button className="close-btn" onClick={() => setShowModal(false)}>&times;</button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
