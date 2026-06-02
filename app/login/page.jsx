@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Hexagon, User, Shield, ArrowRight, ArrowLeft, AlertCircle, Eye, EyeOff } from 'lucide-react';
+import { Hexagon, User, Shield, ArrowRight, ArrowLeft, AlertCircle, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 import './login.css';
 
 export default function LoginPage() {
@@ -14,10 +14,23 @@ export default function LoginPage() {
   const [customName, setCustomName] = useState('');
   
   // Admin Form State
-  const [adminUsername, setAdminUsername] = useState('admin');
-  const [adminPassword, setAdminPassword] = useState('admin');
+  const [adminUsername, setAdminUsername] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+
+  // Team Member Form State
+  const [memberMode, setMemberMode] = useState('login'); // 'login' or 'register'
+  const [memberUsername, setMemberUsername] = useState('');
+  const [memberPassword, setMemberPassword] = useState('');
+  const [showMemberPassword, setShowMemberPassword] = useState(false);
+
+  // Registration Form State
+  const [registerUsername, setRegisterUsername] = useState('');
+  const [registerPassword, setRegisterPassword] = useState('');
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -42,62 +55,166 @@ export default function LoginPage() {
   const handleRoleSelect = (role) => {
     setActiveTab(role);
     setError('');
+    setSuccessMessage('');
     setIsFlipped(true);
   };
 
   const handleBackToRoles = () => {
     setIsFlipped(false);
     setError('');
+    setSuccessMessage('');
   };
 
-  const handleAdminLogin = (e) => {
+  const handleAdminLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
-    setTimeout(() => {
-      if (adminUsername === 'admin' && adminPassword === 'admin') {
-        const userData = {
-          name: 'Admin',
-          role: 'admin',
-          avatarUrl: 'https://ui-avatars.com/api/?name=Admin&background=6366F1&color=ffffff&bold=true'
-        };
-        localStorage.setItem('project_tracker_user', JSON.stringify(userData));
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: adminUsername, password: adminPassword })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('project_tracker_user', JSON.stringify(data));
+        sessionStorage.setItem('show_login_welcome', 'true');
         router.push('/');
       } else {
-        setError('Invalid username or password. (Hint: use admin / admin)');
-        setLoading(false);
+        setError(data.error || 'Invalid credentials');
       }
-    }, 600);
+    } catch (err) {
+      console.error(err);
+      setError('Connection failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleReporteeLogin = (e) => {
+  const handleMemberLogin = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: memberUsername, password: memberPassword })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('project_tracker_user', JSON.stringify(data));
+        sessionStorage.setItem('show_login_welcome', 'true');
+        router.push('/');
+      } else {
+        setError(data.error || 'Invalid credentials');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Connection failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMemberRegister = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
     
     const finalName = customName.trim() || selectedOwner;
-    
     if (!finalName) {
-      setError('Please select or type a team member name.');
+      setError('Please select or enter a display name.');
+      return;
+    }
+
+    if (!registerUsername.trim()) {
+      setError('Please enter a username.');
+      return;
+    }
+
+    if (!registerPassword) {
+      setError('Please enter a password.');
       return;
     }
 
     setLoading(true);
-    setTimeout(() => {
-      const userData = {
-        name: finalName,
-        role: 'reportee',
-        avatarUrl: `https://ui-avatars.com/api/?name=${encodeURIComponent(finalName)}&background=E2E8F0&color=475569&bold=true`
-      };
-      localStorage.setItem('project_tracker_user', JSON.stringify(userData));
-      router.push('/');
-    }, 400);
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: finalName,
+          username: registerUsername,
+          password: registerPassword,
+          role: 'reportee'
+        })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setSuccessMessage('Account created successfully! Log in below.');
+        setMemberUsername(registerUsername); // prefill username
+        setMemberMode('login'); // switch to login tab
+        // Clear registration fields
+        setRegisterUsername('');
+        setRegisterPassword('');
+        setCustomName('');
+        // Refresh owners list in case a new name was registered
+        fetchOwners();
+      } else {
+        setError(data.error || 'Registration failed');
+      }
+    } catch (err) {
+      console.error(err);
+      setError('Connection failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="login-page-container">
       <div className="login-glow-1"></div>
       <div className="login-glow-2"></div>
+
+      {/* Animated background marquee text */}
+      <div className="login-bg-marquee" aria-hidden="true">
+        <div className="marquee-row">
+          <div className="marquee-track marquee-ltr" style={{animationDuration: '30s'}}>
+            <span className="marquee-content">Project Tracker &nbsp;&bull;&nbsp; Milestone Management &nbsp;&bull;&nbsp; Team Bandwidth &nbsp;&bull;&nbsp; Delivery Timelines &nbsp;&bull;&nbsp; Status Reporting &nbsp;&bull;&nbsp; Portfolio Overview &nbsp;&bull;&nbsp; Resource Planning &nbsp;&bull;&nbsp; Risk Tracking &nbsp;&nbsp;&nbsp;</span>
+            <span className="marquee-content">Project Tracker &nbsp;&bull;&nbsp; Milestone Management &nbsp;&bull;&nbsp; Team Bandwidth &nbsp;&bull;&nbsp; Delivery Timelines &nbsp;&bull;&nbsp; Status Reporting &nbsp;&bull;&nbsp; Portfolio Overview &nbsp;&bull;&nbsp; Resource Planning &nbsp;&bull;&nbsp; Risk Tracking &nbsp;&nbsp;&nbsp;</span>
+          </div>
+        </div>
+        <div className="marquee-row">
+          <div className="marquee-track marquee-rtl" style={{animationDuration: '40s'}}>
+            <span className="marquee-content">Sprint Planning &nbsp;&bull;&nbsp; Gantt Charts &nbsp;&bull;&nbsp; Progress Metrics &nbsp;&bull;&nbsp; Admin Controls &nbsp;&bull;&nbsp; Deadline Alerts &nbsp;&bull;&nbsp; Workload Balance &nbsp;&bull;&nbsp; Project Health &nbsp;&bull;&nbsp; Task Dependencies &nbsp;&nbsp;&nbsp;</span>
+            <span className="marquee-content">Sprint Planning &nbsp;&bull;&nbsp; Gantt Charts &nbsp;&bull;&nbsp; Progress Metrics &nbsp;&bull;&nbsp; Admin Controls &nbsp;&bull;&nbsp; Deadline Alerts &nbsp;&bull;&nbsp; Workload Balance &nbsp;&bull;&nbsp; Project Health &nbsp;&bull;&nbsp; Task Dependencies &nbsp;&nbsp;&nbsp;</span>
+          </div>
+        </div>
+        <div className="marquee-row">
+          <div className="marquee-track marquee-ltr" style={{animationDuration: '35s'}}>
+            <span className="marquee-content">Real-time Updates &nbsp;&bull;&nbsp; Role-based Access &nbsp;&bull;&nbsp; Data Insights &nbsp;&bull;&nbsp; Export Reports &nbsp;&bull;&nbsp; Notification Center &nbsp;&bull;&nbsp; Project Assignments &nbsp;&bull;&nbsp; Timeline View &nbsp;&bull;&nbsp; Team Directory &nbsp;&nbsp;&nbsp;</span>
+            <span className="marquee-content">Real-time Updates &nbsp;&bull;&nbsp; Role-based Access &nbsp;&bull;&nbsp; Data Insights &nbsp;&bull;&nbsp; Export Reports &nbsp;&bull;&nbsp; Notification Center &nbsp;&bull;&nbsp; Project Assignments &nbsp;&bull;&nbsp; Timeline View &nbsp;&bull;&nbsp; Team Directory &nbsp;&nbsp;&nbsp;</span>
+          </div>
+        </div>
+        <div className="marquee-row">
+          <div className="marquee-track marquee-rtl" style={{animationDuration: '45s'}}>
+            <span className="marquee-content">Bandwidth Utilization &nbsp;&bull;&nbsp; Completion Rates &nbsp;&bull;&nbsp; Stakeholder Reports &nbsp;&bull;&nbsp; Project Milestones &nbsp;&bull;&nbsp; Owner Assignments &nbsp;&bull;&nbsp; Schedule Tracking &nbsp;&bull;&nbsp; Collaboration Hub &nbsp;&bull;&nbsp; Smart Filters &nbsp;&nbsp;&nbsp;</span>
+            <span className="marquee-content">Bandwidth Utilization &nbsp;&bull;&nbsp; Completion Rates &nbsp;&bull;&nbsp; Stakeholder Reports &nbsp;&bull;&nbsp; Project Milestones &nbsp;&bull;&nbsp; Owner Assignments &nbsp;&bull;&nbsp; Schedule Tracking &nbsp;&bull;&nbsp; Collaboration Hub &nbsp;&bull;&nbsp; Smart Filters &nbsp;&nbsp;&nbsp;</span>
+          </div>
+        </div>
+      </div>
+
       
       <div className={`login-card-perspective ${isFlipped ? 'flipped' : ''}`}>
         <div className="login-card-inner">
@@ -151,7 +268,7 @@ export default function LoginPage() {
             </div>
           </div>
           
-          {/* BACK SIDE - Login Form */}
+          {/* BACK SIDE - Login / Register Form */}
           <div className="login-card-back glass-panel">
             <div className="back-header">
               <button type="button" className="back-arrow-btn" onClick={handleBackToRoles} aria-label="Go back">
@@ -159,9 +276,13 @@ export default function LoginPage() {
                 <span>Back</span>
               </button>
               <div className="back-title-wrapper">
-                <h2>{activeTab === 'admin' ? 'Administrator Login' : 'Team Member Login'}</h2>
+                <h2>{activeTab === 'admin' ? 'Administrator Login' : 'Team Member Space'}</h2>
                 <p className="back-subtitle">
-                  {activeTab === 'admin' ? 'Verify system credentials' : 'Select or register your name'}
+                  {activeTab === 'admin' 
+                    ? 'Verify system credentials' 
+                    : memberMode === 'login' 
+                      ? 'Sign in to access your dashboard' 
+                      : 'Create a new team member account'}
                 </p>
               </div>
             </div>
@@ -170,6 +291,13 @@ export default function LoginPage() {
               <div className="login-error-box">
                 <AlertCircle size={16} />
                 <span>{error}</span>
+              </div>
+            )}
+
+            {successMessage && (
+              <div className="login-error-box" style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.15)', color: '#10B981' }}>
+                <CheckCircle2 size={16} />
+                <span>{successMessage}</span>
               </div>
             )}
 
@@ -212,46 +340,144 @@ export default function LoginPage() {
                 </button>
               </form>
             ) : (
-              <form onSubmit={handleReporteeLogin} className="login-form">
-                <div className="form-group">
-                  <label>Select Your Name</label>
-                  <select 
-                    value={selectedOwner} 
-                    onChange={(e) => {
-                      setSelectedOwner(e.target.value);
-                      if (e.target.value) setCustomName('');
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <div className="auth-sub-tabs">
+                  <button 
+                    type="button"
+                    className={`auth-sub-tab ${memberMode === 'login' ? 'active' : ''}`}
+                    onClick={() => {
+                      setMemberMode('login');
+                      setError('');
+                      setSuccessMessage('');
                     }}
-                    disabled={owners.length === 0}
                   >
-                    {owners.length === 0 ? (
-                      <option value="">No registered members</option>
-                    ) : (
-                      owners.map(owner => (
-                        <option key={owner} value={owner}>{owner}</option>
-                      ))
-                    )}
-                  </select>
+                    Log In
+                  </button>
+                  <button 
+                    type="button"
+                    className={`auth-sub-tab ${memberMode === 'register' ? 'active' : ''}`}
+                    onClick={() => {
+                      setMemberMode('register');
+                      setError('');
+                      setSuccessMessage('');
+                    }}
+                  >
+                    Register
+                  </button>
                 </div>
 
-                <div className="divider-text">
-                  <span>OR CREATE NEW</span>
-                </div>
+                {memberMode === 'login' ? (
+                  <form onSubmit={handleMemberLogin} className="login-form">
+                    <div className="form-group">
+                      <label>Username</label>
+                      <input 
+                        type="text" 
+                        value={memberUsername}
+                        onChange={(e) => setMemberUsername(e.target.value)}
+                        required
+                        placeholder="Enter your username"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Password</label>
+                      <div className="password-input-wrapper">
+                        <input 
+                          type={showMemberPassword ? 'text' : 'password'} 
+                          value={memberPassword}
+                          onChange={(e) => setMemberPassword(e.target.value)}
+                          required
+                          placeholder="Enter your password"
+                        />
+                        <button 
+                          type="button" 
+                          className="password-toggle"
+                          onClick={() => setShowMemberPassword(!showMemberPassword)}
+                        >
+                          {showMemberPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
 
-                <div className="form-group">
-                  <label>Enter New Name</label>
-                  <input 
-                    type="text" 
-                    value={customName}
-                    onChange={(e) => setCustomName(e.target.value)}
-                    placeholder="Type your name to sign in"
-                  />
-                </div>
+                    <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
+                      {loading ? 'Logging in...' : 'Sign In as Team Member'}
+                      {!loading && <ArrowRight size={16} style={{ marginLeft: '8px' }} />}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleMemberRegister} className="login-form compact">
+                    <div className="form-group">
+                      <label>Select Display Name</label>
+                      <select 
+                        value={selectedOwner} 
+                        onChange={(e) => {
+                          setSelectedOwner(e.target.value);
+                          if (e.target.value) setCustomName('');
+                        }}
+                        disabled={owners.length === 0}
+                      >
+                        {owners.length === 0 ? (
+                          <option value="">No registered members</option>
+                        ) : (
+                          owners.map(owner => (
+                            <option key={owner} value={owner}>{owner}</option>
+                          ))
+                        )}
+                      </select>
+                    </div>
 
-                <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
-                  {loading ? 'Logging in...' : 'Sign In as Team Member'}
-                  {!loading && <ArrowRight size={16} style={{ marginLeft: '8px' }} />}
-                </button>
-              </form>
+                    <div className="divider-text" style={{ margin: '0.1rem 0' }}>
+                      <span>OR CREATE NEW NAME</span>
+                    </div>
+
+                    <div className="form-group">
+                      <label>Enter Custom Name</label>
+                      <input 
+                        type="text" 
+                        value={customName}
+                        onChange={(e) => setCustomName(e.target.value)}
+                        placeholder="Type your display name"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Username</label>
+                      <input 
+                        type="text" 
+                        value={registerUsername}
+                        onChange={(e) => setRegisterUsername(e.target.value)}
+                        required
+                        placeholder="Choose a username"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>Password</label>
+                      <div className="password-input-wrapper">
+                        <input 
+                          type={showRegisterPassword ? 'text' : 'password'} 
+                          value={registerPassword}
+                          onChange={(e) => setRegisterPassword(e.target.value)}
+                          required
+                          placeholder="Choose a password"
+                        />
+                        <button 
+                          type="button" 
+                          className="password-toggle"
+                          onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                        >
+                          {showRegisterPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn btn-primary login-submit-btn" disabled={loading}>
+                      {loading ? 'Creating account...' : 'Create Account'}
+                      {!loading && <ArrowRight size={16} style={{ marginLeft: '8px' }} />}
+                    </button>
+                  </form>
+                )}
+              </div>
             )}
           </div>
           

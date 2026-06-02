@@ -413,68 +413,72 @@ export default function DashboardContent() {
 
           {/* FILTER BAR AND TABLE */}
           <div className="glass-panel dashboard-header" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="filter-bar" style={{ flexWrap: 'nowrap', gap: '0.5rem', alignItems: 'flex-end', overflowX: 'auto', paddingBottom: '4px' }}>
-              <div className="filter-group-container" style={{ flex: '1 1 120px', minWidth: '100px', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Search</label>
-                <div className="filter-group search-filter">
-                  <Search size={14} className="icon" style={{ left: '8px' }} />
-                  <input 
-                    type="text" 
-                    name="search"
-                    value={filters.search}
-                    onChange={handleFilterChange}
-                    placeholder="Search..." 
-                    className="filter-input" 
-                    style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem 0.4rem 0.4rem 1.8rem' }} 
-                  />
+            <div className="filter-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', width: '100%', paddingBottom: '4px' }}>
+              <div className="filter-left-side" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.75rem', flex: '1 1 auto' }}>
+                <div className="filter-group-container" style={{ flex: '1 1 150px', minWidth: '120px', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Search</label>
+                  <div className="filter-group search-filter">
+                    <Search size={14} className="icon" style={{ left: '8px' }} />
+                    <input 
+                      type="text" 
+                      name="search"
+                      value={filters.search}
+                      onChange={handleFilterChange}
+                      placeholder="Search..." 
+                      className="filter-input" 
+                      style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem 0.4rem 0.4rem 1.8rem' }} 
+                    />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Owner</label>
-                <div className="filter-group">
-                  <select name="owner" value={filters.owner} onChange={handleFilterChange} className="filter-input" style={{ appearance: 'none', minWidth: '90px', fontSize: '0.8rem', padding: '0.4rem 1.6rem 0.4rem 0.6rem' }}>
-                    <option value="">All Owners</option>
-                    {availableOwners.map(owner => (
-                      <option key={owner} value={owner}>{owner}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={12} className="icon-right" style={{ right: '6px' }} />
+                
+                <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Owner</label>
+                  <div className="filter-group">
+                    <select name="owner" value={filters.owner} onChange={handleFilterChange} className="filter-input" style={{ appearance: 'none', minWidth: '100px', fontSize: '0.8rem', padding: '0.4rem 1.6rem 0.4rem 0.6rem' }}>
+                      <option value="">All Owners</option>
+                      {availableOwners.map(owner => (
+                        <option key={owner} value={owner}>{owner}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={12} className="icon-right" style={{ right: '6px' }} />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Status</label>
-                <div className="filter-group">
-                  <select name="status" value={filters.status} onChange={handleFilterChange} className="filter-input" style={{ appearance: 'none', minWidth: '90px', fontSize: '0.8rem', padding: '0.4rem 1.6rem 0.4rem 0.6rem' }}>
-                    <option value="">All</option>
-                    <option value="Not Started">Not Started</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Blocked">Blocked</option>
-                  </select>
-                  <ChevronDown size={12} className="icon-right" style={{ right: '6px' }} />
+                
+                <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Status</label>
+                  <div className="filter-group">
+                    <select name="status" value={filters.status} onChange={handleFilterChange} className="filter-input" style={{ appearance: 'none', minWidth: '100px', fontSize: '0.8rem', padding: '0.4rem 1.6rem 0.4rem 0.6rem' }}>
+                      <option value="">All</option>
+                      <option value="Not Started">Not Started</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Blocked">Blocked</option>
+                    </select>
+                    <ChevronDown size={12} className="icon-right" style={{ right: '6px' }} />
+                  </div>
                 </div>
-              </div>
-              
-              <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Date Range</label>
-                <div className="filter-group" style={{ gap: '0.2rem' }}>
-                  <Calendar size={14} className="icon" style={{ left: '8px' }} />
-                  <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="filter-input" style={{ padding: '0.4rem 0.2rem 0.4rem 1.8rem', fontSize: '0.75rem', width: '105px' }} />
-                  <span style={{ color: '#94A3B8', fontSize: '0.75rem' }}>-</span>
-                  <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="filter-input" style={{ padding: '0.4rem 0.2rem 0.4rem 0.4rem', fontSize: '0.75rem', width: '105px' }} />
+                
+                <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
+                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Date Range</label>
+                  <div className="filter-group" style={{ gap: '0.2rem' }}>
+                    <Calendar size={14} className="icon" style={{ left: '8px' }} />
+                    <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="filter-input" style={{ padding: '0.4rem 0.2rem 0.4rem 1.8rem', fontSize: '0.75rem', width: '105px' }} />
+                    <span style={{ color: '#94A3B8', fontSize: '0.75rem' }}>-</span>
+                    <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="filter-input" style={{ padding: '0.4rem 0.2rem 0.4rem 0.4rem', fontSize: '0.75rem', width: '105px' }} />
+                  </div>
                 </div>
+
+                <button className="text-btn" style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '500', height: '31px', padding: '0 0.5rem', flexShrink: 0 }} onClick={() => setFilters({ owner: '', status: '', startDate: '', endDate: '', search: '' })}>
+                  Clear Filters
+                </button>
               </div>
 
-              <button className="btn btn-secondary" onClick={exportToXLSX} style={{ marginLeft: 'auto', background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.4rem 0.8rem', height: '31px', fontSize: '0.8rem', flexShrink: 0 }}>
-                <Download size={14} style={{ marginRight: '4px' }} />
-                Export
-              </button>
-              
-              <button className="text-btn" style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '500', height: '31px', padding: '0 0.5rem', flexShrink: 0 }} onClick={() => setFilters({ owner: '', status: '', startDate: '', endDate: '', search: '' })}>
-                Clear Filters
-              </button>
+              <div className="filter-right-side" style={{ display: 'flex', alignItems: 'flex-end', flexShrink: 0 }}>
+                <button className="btn btn-secondary" onClick={exportToXLSX} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.4rem 0.8rem', height: '31px', fontSize: '0.8rem', flexShrink: 0 }}>
+                  <Download size={14} style={{ marginRight: '4px' }} />
+                  Export
+                </button>
+              </div>
             </div>
           </div>
 

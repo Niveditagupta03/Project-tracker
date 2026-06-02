@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Calendar, Clock, Activity, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, Activity, AlertCircle, Edit2 } from 'lucide-react';
 import './project.css';
 
 export default function ProjectDetail({ params }) {
@@ -49,6 +49,10 @@ export default function ProjectDetail({ params }) {
     }
   };
 
+  const handleEditClick = () => {
+    window.dispatchEvent(new CustomEvent('open-project-modal', { detail: { project } }));
+  };
+
   if (loading) {
     return (
       <div className="project-detail-loading">
@@ -71,13 +75,24 @@ export default function ProjectDetail({ params }) {
     <div className="project-detail-container">
       <header className="project-header">
         <div className="header-top">
-          <button className="btn-back" onClick={() => router.push('/')}>
+          <button className="btn-back" onClick={() => router.back()}>
             <ArrowLeft size={18} />
-            Back to Dashboard
+            Back
           </button>
-          <span className={getStatusBadgeClass(project.status)}>
-            {project.status || 'Unknown'}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span className={getStatusBadgeClass(project.status)}>
+              {project.status || 'Unknown'}
+            </span>
+            {currentUser?.role === 'admin' && (
+              <button
+                className="edit-project-btn"
+                onClick={handleEditClick}
+              >
+                <Edit2 size={14} />
+                Edit Project
+              </button>
+            )}
+          </div>
         </div>
         
         <div className="header-main">

@@ -21,7 +21,7 @@
 }
 
 body {
-  font-family: 'Outfit', sans-serif;
+  font-family: 'Calibri', 'Outfit', sans-serif;
   background-color: var(--bg-color);
   background-image: 
     radial-gradient(at 10% 20%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),

@@ -4,10 +4,10 @@
   align-items: center;
   width: 100vw;
   height: 100vh;
-  background: linear-gradient(135deg, #EEF2FF 0%, #F0F9FF 50%, #F5F3FF 100%);
+  background: linear-gradient(135deg, #2B4593 0%, #e6e2c5 100%);
   position: relative;
   overflow: hidden;
-  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Calibri', 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 /* Background Glow Effects */
@@ -16,7 +16,7 @@
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(circle, rgba(43, 69, 147, 0.25) 0%, rgba(43, 69, 147, 0) 70%);
   top: -150px;
   right: -150px;
   filter: blur(60px);
@@ -27,7 +27,7 @@
   width: 600px;
   height: 600px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(139, 92, 246, 0) 70%);
+  background: radial-gradient(circle, rgba(230, 226, 197, 0.4) 0%, rgba(230, 226, 197, 0) 70%);
   bottom: -200px;
   left: -200px;
   filter: blur(70px);
@@ -36,8 +36,8 @@
 /* 3D Perspective Card Container */
 .login-card-perspective {
   width: 100%;
-  max-width: 440px;
-  height: 540px;
+  max-width: 370px;
+  height: 490px;
   perspective: 1500px;
   z-index: 10;
 }
@@ -65,14 +65,13 @@
   backface-visibility: hidden;
   border-radius: 1.5rem;
   padding: 2.5rem;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   box-shadow: 
-    0 20px 40px rgba(99, 102, 241, 0.06), 
-    0 1px 3px rgba(0, 0, 0, 0.02),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+    0 30px 60px rgba(43, 69, 147, 0.15), 
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25);
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -96,13 +95,13 @@
 }
 
 .login-logo-animated {
-  color: #6366F1;
-  background: rgba(99, 102, 241, 0.08);
+  color: #2B4593;
+  background: rgba(43, 69, 147, 0.06);
   padding: 0.75rem;
   border-radius: 1rem;
   margin-bottom: 0.75rem;
-  border: 1px solid rgba(99, 102, 241, 0.18);
-  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(43, 69, 147, 0.15);
+  box-shadow: 0 8px 16px rgba(43, 69, 147, 0.05);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -123,7 +122,7 @@
 }
 
 .login-header .v2-tag {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #2B4593 0%, #3B5BB3 100%);
   color: white;
   font-size: 0.625rem;
   font-weight: 800;
@@ -132,7 +131,7 @@
   position: absolute;
   top: 50px;
   right: calc(50% - 95px);
-  box-shadow: 0 2px 6px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 6px rgba(43, 69, 147, 0.25);
 }
 
 .login-subtitle {
@@ -176,8 +175,8 @@
   text-align: left;
   padding: 1.25rem;
   border-radius: 1rem;
-  border: 1px solid rgba(226, 232, 240, 0.8);
-  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.6);
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   width: 100%;
@@ -186,8 +185,9 @@
 
 .role-select-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 0 10px 20px rgba(99, 102, 241, 0.05);
+  border-color: rgba(43, 69, 147, 0.25);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 20px rgba(43, 69, 147, 0.05);
 }
 
 .role-icon-wrapper {
@@ -200,25 +200,25 @@
 }
 
 .admin-icon {
-  background: rgba(99, 102, 241, 0.08);
-  color: #6366F1;
+  background: rgba(43, 69, 147, 0.06);
+  color: #2B4593;
 }
 
 .member-icon {
-  background: rgba(139, 92, 246, 0.08);
-  color: #8B5CF6;
+  background: rgba(59, 91, 179, 0.06);
+  color: #3B5BB3;
 }
 
 .role-select-card:hover .admin-icon {
-  background: #6366F1;
+  background: #2B4593;
   color: #ffffff;
-  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 10px rgba(43, 69, 147, 0.25);
 }
 
 .role-select-card:hover .member-icon {
-  background: #8B5CF6;
+  background: #3B5BB3;
   color: #ffffff;
-  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 10px rgba(59, 91, 179, 0.25);
 }
 
 .role-info {
@@ -245,7 +245,7 @@
 }
 
 .role-select-card:hover .arrow-icon {
-  color: #6366F1;
+  color: #2B4593;
   transform: translateX(4px);
 }
 
@@ -273,7 +273,7 @@
 }
 
 .back-arrow-btn:hover {
-  color: #6366F1;
+  color: #2B4593;
 }
 
 .back-title-wrapper h2 {
@@ -313,8 +313,8 @@
 
 .login-form input,
 .login-form select {
-  background: #F8FAFC;
-  border: 1.5px solid #E2E8F0;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: 0.6rem;
   padding: 0.65rem 0.8rem;
   color: #1E293B;
@@ -332,9 +332,9 @@
 
 .login-form input:focus,
 .login-form select:focus {
-  border-color: #6366F1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  background: #ffffff;
+  border-color: #2B4593;
+  box-shadow: 0 0 0 3px rgba(43, 69, 147, 0.15);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 /* Password Input */
@@ -359,7 +359,7 @@
 }
 
 .password-toggle:hover {
-  color: #6366F1;
+  color: #2B4593;
 }
 
 /* Divider styling */
@@ -411,19 +411,19 @@
   font-weight: 600 !important;
   padding: 0.75rem 1.25rem !important;
   border-radius: 0.6rem !important;
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%) !important;
+  background: linear-gradient(135deg, #2B4593 0%, #3B5BB3 100%) !important;
   color: white !important;
   border: none !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
+  box-shadow: 0 4px 15px rgba(43, 69, 147, 0.25) !important;
   margin-top: 0.5rem;
 }
 
 .login-submit-btn:hover:not(:disabled) {
   opacity: 0.95;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4) !important;
+  box-shadow: 0 6px 20px rgba(43, 69, 147, 0.35) !important;
 }
 
 .login-submit-btn:active:not(:disabled) {
@@ -436,15 +436,154 @@
   box-shadow: none !important;
 }
 
+/* Back Face Card scroll on overflow */
+.login-card-back {
+  transform: rotateY(180deg);
+  justify-content: flex-start;
+  gap: 1.25rem;
+  overflow-y: auto;
+}
+
+.login-card-back::-webkit-scrollbar {
+  width: 6px;
+}
+.login-card-back::-webkit-scrollbar-track {
+  background: transparent;
+}
+.login-card-back::-webkit-scrollbar-thumb {
+  background: rgba(43, 69, 147, 0.15);
+  border-radius: 3px;
+}
+.login-card-back::-webkit-scrollbar-thumb:hover {
+  background: rgba(43, 69, 147, 0.3);
+}
+
+/* Auth Sub-Tabs (Log In / Register) */
+.auth-sub-tabs {
+  display: flex;
+  background: #F1F5F9;
+  padding: 0.25rem;
+  border-radius: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.auth-sub-tab {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 0.775rem;
+  font-weight: 700;
+  color: #64748B;
+  padding: 0.45rem;
+  cursor: pointer;
+  border-radius: 0.35rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  text-align: center;
+}
+
+.auth-sub-tab.active {
+  background: #ffffff;
+  color: #2B4593;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.login-form.compact {
+  gap: 0.65rem;
+}
+
+.login-form.compact .form-group {
+  gap: 0.2rem;
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .login-card-perspective {
     max-width: 90%;
-    height: 560px;
+    height: 490px;
   }
   
   .login-card-front,
   .login-card-back {
-    padding: 1.75rem;
+    padding: 1.5rem;
   }
 }
+
+/* =============================================
+   BACKGROUND MARQUEE TEXT (Transeity Style)
+   Translucent outline text scrolling behind card
+   ============================================= */
+
+.login-bg-marquee {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.marquee-row {
+  overflow: hidden;
+  width: 100%;
+}
+
+/* LTR track: two copies, animate from 0 to -50% */
+.marquee-track {
+  display: flex;
+  white-space: nowrap;
+  width: max-content;
+}
+
+.marquee-ltr {
+  animation: marquee-ltr linear infinite;
+}
+
+.marquee-rtl {
+  animation: marquee-rtl linear infinite;
+}
+
+.marquee-content {
+  display: inline-block;
+  font-size: clamp(1.1rem, 2.2vh, 2rem);
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-family: 'Calibri', 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Transeity style: outline-only transparent fill */
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(43, 69, 147, 0.12);
+  text-stroke: 1.5px rgba(43, 69, 147, 0.12);
+
+  /* Subtle shimmer effect */
+  opacity: 0.85;
+  padding: 0.2em 0;
+}
+
+/* Even rows get slightly lighter stroke for depth */
+.marquee-row:nth-child(even) .marquee-content {
+  -webkit-text-stroke: 1.5px rgba(230, 226, 197, 0.25);
+  text-stroke: 1.5px rgba(230, 226, 197, 0.25);
+  opacity: 0.7;
+}
+
+@keyframes marquee-ltr {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-rtl {
+  0%   { transform: translateX(-50%); }
+  100% { transform: translateX(0); }
+}
+
+/* Ensure the card stays above the marquee */
+.login-card-perspective {
+  z-index: 10;
+  position: relative;
+}
+

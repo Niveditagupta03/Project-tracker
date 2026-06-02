@@ -14,10 +14,12 @@ export default function AppShell({ children }) {
   const pathname = usePathname();
   
   const [currentUser, setCurrentUser] = useState(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [availableOwners, setAvailableOwners] = useState([]);
   const [newPersonName, setNewPersonName] = useState('');
+  const [registeredUsers, setRegisteredUsers] = useState([]);
   
   const [formData, setFormData] = useState({
     title: '', description: '', type: '', owners: [], status: 'Not Started',
@@ -37,13 +39,23 @@ export default function AppShell({ children }) {
         const data = await res.json();
         setActivities(data);
         
-        const stored = localStorage.getItem('project_tracker_last_read_activities');
-        if (!stored) {
-          setUnreadCount(data.length);
-        } else {
-          const lastReadTime = new Date(stored).getTime();
-          const unread = data.filter(act => new Date(act.createdAt).getTime() > lastReadTime).length;
-          setUnreadCount(unread);
+        const loggedUser = localStorage.getItem('project_tracker_user');
+        const parsedUser = loggedUser ? JSON.parse(loggedUser) : null;
+        
+        if (parsedUser) {
+          const storageKey = `project_tracker_last_read_activities_${parsedUser.name}`;
+          const stored = localStorage.getItem(storageKey);
+          if (!stored) {
+            const unread = data.filter(act => act.userName !== parsedUser.name).length;
+            setUnreadCount(unread);
+          } else {
+            const lastReadTime = new Date(stored).getTime();
+            const unread = data.filter(act => 
+              new Date(act.createdAt).getTime() > lastReadTime && 
+              act.userName !== parsedUser.name
+            ).length;
+            setUnreadCount(unread);
+          }
         }
       }
     } catch (error) {
@@ -51,12 +63,25 @@ export default function AppShell({ children }) {
     }
   };
 
+  const fetchRegisteredUsers = async () => {
+    try {
+      const res = await fetch('/api/users');
+      if (res.ok) {
+        const data = await res.json();
+        setRegisteredUsers(data);
+      }
+    } catch (error) {
+      console.error('Failed to registered users:', error);
+    }
+  };
+
   const toggleNotifications = () => {
     const nextState = !showNotifications;
     setShowNotifications(nextState);
-    if (nextState) {
+    if (nextState && currentUser) {
       const nowStr = new Date().toISOString();
-      localStorage.setItem('project_tracker_last_read_activities', nowStr);
+      const storageKey = `project_tracker_last_read_activities_${currentUser.name}`;
+      localStorage.setItem(storageKey, nowStr);
       setLastReadTimestamp(nowStr);
       setUnreadCount(0);
     }
@@ -91,18 +116,44 @@ export default function AppShell({ children }) {
         router.push('/');
       }
     }
-
-    const stored = localStorage.getItem('project_tracker_last_read_activities');
-    if (stored) {
-      setLastReadTimestamp(stored);
-    }
   }, [pathname]);
 
   useEffect(() => {
-    fetchOwners();
-    fetchActivities();
+    if (currentUser) {
+      const storageKey = `project_tracker_last_read_activities_${currentUser.name}`;
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        setLastReadTimestamp(stored);
+      } else {
+        setLastReadTimestamp(null);
+      }
+    }
+  }, [currentUser]);
 
-    const interval = setInterval(fetchActivities, 30000);
+  useEffect(() => {
+    if (currentUser) {
+      const shouldShow = sessionStorage.getItem('show_login_welcome');
+      if (shouldShow === 'true') {
+        setShowWelcome(true);
+        sessionStorage.removeItem('show_login_welcome');
+        const timer = setTimeout(() => {
+          setShowWelcome(false);
+        }, 6000);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser) {
+      fetchActivities();
+      const interval = setInterval(fetchActivities, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    fetchOwners();
     
     const handleOpenModal = (e) => {
       const loggedUser = localStorage.getItem('project_tracker_user');
@@ -160,9 +211,14 @@ export default function AppShell({ children }) {
       window.removeEventListener('open-project-modal', handleOpenModal);
       window.removeEventListener('project-updated', handleProjectUpdated);
       document.removeEventListener('click', handleOutsideClick);
-      clearInterval(interval);
     };
   }, []);
+
+  useEffect(() => {
+    if (showProfileDropdown && currentUser?.role === 'admin') {
+      fetchRegisteredUsers();
+    }
+  }, [showProfileDropdown, currentUser]);
 
   const fetchOwners = async () => {
     try {
@@ -253,12 +309,18 @@ export default function AppShell({ children }) {
 
   return (
     <div className="app-shell" style={{ flexDirection: 'column' }}>
+      {showWelcome && currentUser && (
+        <div className="welcome-banner glass-panel">
+          <span className="welcome-emoji">👋</span>
+          <span className="welcome-text">Hey <span className="welcome-name">{currentUser.name}</span>!</span>
+        </div>
+      )}
       <header className="top-nav-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', whiteSpace: 'nowrap', width: '25%' }}>
           <div className="logo-icon">
             <Hexagon size={20} fill="currentColor" />
           </div>
-          <span className="nav-title" style={{ fontSize: '0.95rem', whiteSpace: 'nowrap' }}>Project Tracker</span>
+          <span className="nav-title" style={{ fontSize: '1rem', whiteSpace: 'nowrap' }}>Project Tracker</span>
           <span className="v2-badge" style={{ fontSize: '0.6rem', padding: '0.1rem 0.3rem' }}>V2</span>
         </div>
         
@@ -276,6 +338,12 @@ export default function AppShell({ children }) {
               <Clock size={15} />
               <span>Timeline</span>
             </Link>
+             {currentUser?.role === 'admin' && (
+              <Link href="/team" className={`header-nav-item ${pathname === '/team' ? 'active' : ''}`}>
+                <Users size={15} />
+                <span>Team</span>
+              </Link>
+            )}
           </nav>
         </div>
         
@@ -302,10 +370,13 @@ export default function AppShell({ children }) {
                       className="notifications-clear-btn"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const nowStr = new Date().toISOString();
-                        localStorage.setItem('project_tracker_last_read_activities', nowStr);
-                        setLastReadTimestamp(nowStr);
-                        setUnreadCount(0);
+                        if (currentUser) {
+                          const nowStr = new Date().toISOString();
+                          const storageKey = `project_tracker_last_read_activities_${currentUser.name}`;
+                          localStorage.setItem(storageKey, nowStr);
+                          setLastReadTimestamp(nowStr);
+                          setUnreadCount(0);
+                        }
                       }}
                     >
                       Mark all as read
@@ -359,21 +430,24 @@ export default function AppShell({ children }) {
             <ChevronDown size={14} className="chevron" />
 
             {showProfileDropdown && (
-              <div className="profile-dropdown glass-panel" style={{
-                position: 'absolute',
-                top: '110%',
-                right: 0,
-                backgroundColor: 'white',
-                border: '1px solid rgba(0,0,0,0.06)',
-                borderRadius: '0.5rem',
-                boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
-                padding: '0.5rem',
-                zIndex: 200,
-                minWidth: '130px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.25rem'
-              }}>
+              <div className="profile-dropdown glass-panel" 
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                  position: 'absolute',
+                  top: '110%',
+                  right: 0,
+                  backgroundColor: 'white',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  borderRadius: '8px',
+                  boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)',
+                  padding: '8px',
+                  zIndex: 200,
+                  minWidth: currentUser?.role === 'admin' ? '240px' : '130px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '4px'
+                }}
+              >
                 <button 
                   onClick={() => {
                     localStorage.removeItem('project_tracker_user');
@@ -401,6 +475,33 @@ export default function AppShell({ children }) {
                   <LogOut size={14} />
                   <span>Log Out</span>
                 </button>
+
+                {currentUser?.role === 'admin' && (
+                  <>
+                    <div className="dropdown-divider"></div>
+                    <span className="dropdown-section-title">
+                      Team Members ({registeredUsers.filter(u => u.role !== 'admin').length})
+                    </span>
+                    <div className="dropdown-team-list">
+                      {registeredUsers.filter(u => u.role !== 'admin').map(user => (
+                        <div key={user.id} className="dropdown-team-item" title={`${user.name} (@${user.username})`}>
+                          <div className="dropdown-team-avatar">
+                            {user.name ? user.name.substring(0, 2).toUpperCase() : '?'}
+                          </div>
+                          <div className="dropdown-team-info">
+                            <span className="dropdown-team-name">{user.name}</span>
+                            <span className="dropdown-team-username">@{user.username}</span>
+                          </div>
+                        </div>
+                      ))}
+                      {registeredUsers.filter(u => u.role !== 'admin').length === 0 && (
+                        <div style={{ padding: '0.5rem 0.75rem', fontSize: '0.7rem', color: '#94A3B8', textAlign: 'center', fontStyle: 'italic' }}>
+                          No team members registered
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -418,11 +519,13 @@ export default function AppShell({ children }) {
           <div className="modal-content glass-panel">
             <div className="modal-header">
               <h2>{formData.id ? 'Edit Project' : 'Add New Project'}</h2>
-              <button className="close-btn" onClick={() => setShowModal(false)}>&times;</button>
+              <button className="close-btn" onClick={() => setShowModal(false)}>
+                <X size={20} />
+              </button>
             </div>
             <form onSubmit={handleSubmit} className="modal-form">
               <div className="form-grid">
-                <div className="form-group">
+                <div className="form-group col-span-2">
                   <label>Project Title *</label>
                   <input type="text" name="title" required value={formData.title} onChange={handleFormChange} />
                 </div>
@@ -442,10 +545,10 @@ export default function AppShell({ children }) {
                     </div>
                   )}
 
-                  <div className="checkbox-list" style={{ maxHeight: '120px' }}>
+                  <div className="checkbox-list">
                     {availableOwners.map(owner => (
-                      <div key={owner} className="checkbox-item-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '2px 0' }}>
-                        <label className="checkbox-item" style={{ margin: 0, flex: 1 }}>
+                      <div key={owner} className="checkbox-item-row">
+                        <label className="checkbox-item">
                           <input 
                             type="checkbox" 
                             checked={formData.owners.includes(owner)} 
@@ -455,8 +558,7 @@ export default function AppShell({ children }) {
                         </label>
                         <button 
                           type="button" 
-                          className="icon-btn" 
-                          style={{ padding: '2px', opacity: 0.6 }} 
+                          className="icon-btn remove-owner-btn" 
                           title="Remove from list"
                           onClick={() => {
                             setAvailableOwners(availableOwners.filter(o => o !== owner));
@@ -509,11 +611,6 @@ export default function AppShell({ children }) {
                 </div>
 
                 <div className="form-group">
-                  <label>Progress (%)</label>
-                  <input type="number" min="0" max="100" name="progress" value={formData.progress} onChange={handleFormChange} />
-                </div>
-
-                <div className="form-group">
                   <label>Priority</label>
                   <select name="priority" value={formData.priority} onChange={handleFormChange}>
                     <option value="Low">Low</option>
@@ -529,6 +626,16 @@ export default function AppShell({ children }) {
                     <option value="At Risk">At Risk</option>
                     <option value="Off Track">Off Track</option>
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Progress (%)</label>
+                  <input type="number" min="0" max="100" name="progress" value={formData.progress} onChange={handleFormChange} />
+                </div>
+
+                <div className="form-group">
+                  <label>Dependency With</label>
+                  <input type="text" name="dependencyWith" value={formData.dependencyWith} onChange={handleFormChange} />
                 </div>
 
                 <div className="form-group">
@@ -549,11 +656,6 @@ export default function AppShell({ children }) {
                 <div className="form-group">
                   <label>Prod Date</label>
                   <input type="date" name="prodDate" value={formData.prodDate} onChange={handleFormChange} />
-                </div>
-
-                <div className="form-group">
-                  <label>Dependency With</label>
-                  <input type="text" name="dependencyWith" value={formData.dependencyWith} onChange={handleFormChange} />
                 </div>
 
                 <div className="form-group col-span-2">

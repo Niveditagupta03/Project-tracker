@@ -365,3 +365,32 @@
 }
 .project-detail-container .bg-success { background: #10B981; }
 .project-detail-container .bg-warning { background: #FBBF24; }
+
+/* Edit Project Button */
+.project-detail-container .edit-project-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #2B4593 0%, #3B5BB3 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 10px rgba(43, 69, 147, 0.25);
+  font-family: inherit;
+}
+
+.project-detail-container .edit-project-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 5px 14px rgba(43, 69, 147, 0.35);
+}
+
+.project-detail-container .edit-project-btn:active {
+  transform: translateY(0);
+}
+
