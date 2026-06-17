@@ -129,9 +129,9 @@ export default function LoginPage() {
     setError('');
     setSuccessMessage('');
     
-    const finalName = customName.trim() || selectedOwner;
+    const finalName = customName.trim();
     if (!finalName) {
-      setError('Please select or enter a display name.');
+      setError('Please enter a display name.');
       return;
     }
 
@@ -407,36 +407,13 @@ export default function LoginPage() {
                 ) : (
                   <form onSubmit={handleMemberRegister} className="login-form compact">
                     <div className="form-group">
-                      <label>Select Display Name</label>
-                      <select 
-                        value={selectedOwner} 
-                        onChange={(e) => {
-                          setSelectedOwner(e.target.value);
-                          if (e.target.value) setCustomName('');
-                        }}
-                        disabled={owners.length === 0}
-                      >
-                        {owners.length === 0 ? (
-                          <option value="">No registered members</option>
-                        ) : (
-                          owners.map(owner => (
-                            <option key={owner} value={owner}>{owner}</option>
-                          ))
-                        )}
-                      </select>
-                    </div>
-
-                    <div className="divider-text" style={{ margin: '0.1rem 0' }}>
-                      <span>OR CREATE NEW NAME</span>
-                    </div>
-
-                    <div className="form-group">
-                      <label>Enter Custom Name</label>
+                      <label>Display Name</label>
                       <input 
                         type="text" 
                         value={customName}
                         onChange={(e) => setCustomName(e.target.value)}
-                        placeholder="Type your display name"
+                        placeholder="Enter your display name"
+                        required
                       />
                     </div>
 

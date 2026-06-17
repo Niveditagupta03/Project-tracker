@@ -195,8 +195,8 @@ export default function DashboardContent() {
 
     const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
 
-    const data = projects.map(p => ({
-      'Sr No': p.id,
+    const data = projects.map((p, i) => ({
+      'Sr No': i + 1,
       'Project Title': p.title,
       'Project Description': p.description,
       'Project Type': p.type,
@@ -238,6 +238,17 @@ export default function DashboardContent() {
   const inProgressCount = allProjects.filter(p => p.status === 'In Progress').length;
   const notStartedCount = allProjects.filter(p => p.status === 'Not Started').length;
   const delayedCount = allProjects.filter(p => p.status === 'Delayed').length;
+
+  // Owner-specific stats (when owner filter is active)
+  const ownerProjects = filters.owner
+    ? allProjects.filter(p => p.owner && p.owner.split(',').map(o => o.trim()).includes(filters.owner))
+    : [];
+  const ownerStats = filters.owner ? {
+    total: ownerProjects.length,
+    inProgress: ownerProjects.filter(p => p.status === 'In Progress').length,
+    completed: ownerProjects.filter(p => p.status === 'Completed').length,
+    delayed: ownerProjects.filter(p => p.status === 'Delayed').length,
+  } : null;
 
   const completedPct = totalProjectsCount ? (completedCount / totalProjectsCount * 100) : 0;
   const inProgressPct = totalProjectsCount ? (inProgressCount / totalProjectsCount * 100) : 0;
@@ -410,6 +421,42 @@ export default function DashboardContent() {
               {renderTrend(delayedTrend, true)}
             </div>
           </div>
+
+          {/* OWNER STATS BANNER */}
+          {ownerStats && (
+            <div className="owner-stats-banner glass-panel">
+              <div className="owner-stats-header">
+                <div className="owner-stats-avatar">
+                  {filters.owner.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <div className="owner-stats-name">{filters.owner}</div>
+                  <div className="owner-stats-label">Project Summary</div>
+                </div>
+              </div>
+              <div className="owner-stats-cards">
+                <div className="owner-stat-item total">
+                  <span className="owner-stat-value">{ownerStats.total}</span>
+                  <span className="owner-stat-title">Total</span>
+                </div>
+                <div className="owner-stat-divider" />
+                <div className="owner-stat-item inprogress">
+                  <span className="owner-stat-value">{ownerStats.inProgress}</span>
+                  <span className="owner-stat-title">In Progress</span>
+                </div>
+                <div className="owner-stat-divider" />
+                <div className="owner-stat-item completed">
+                  <span className="owner-stat-value">{ownerStats.completed}</span>
+                  <span className="owner-stat-title">Completed</span>
+                </div>
+                <div className="owner-stat-divider" />
+                <div className="owner-stat-item delayed">
+                  <span className="owner-stat-value">{ownerStats.delayed}</span>
+                  <span className="owner-stat-title">Delayed</span>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* FILTER BAR AND TABLE */}
           <div className="glass-panel dashboard-header" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
