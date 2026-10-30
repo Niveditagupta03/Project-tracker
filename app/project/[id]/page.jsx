@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Calendar, Clock, Activity, AlertCircle, Edit2 } from 'lucide-react';
+import RequestMeta from '../../../components/RequestMeta';
 import './project.css';
 
 export default function ProjectDetail({ params }) {
@@ -98,7 +99,7 @@ export default function ProjectDetail({ params }) {
         <div className="header-main">
           <div>
             <h1 className="project-title">{project.title}</h1>
-            <p className="project-type">{project.type}</p>
+            <RequestMeta project={project} />
           </div>
           <div className="project-health">
             <span className={`health-dot ${(project.health || 'On Track') === 'On Track' ? 'dot-success' : project.health === 'At Risk' ? 'dot-warning' : 'dot-danger'}`}></span>

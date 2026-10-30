@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, MoreVertical, Clock } from 'lucide-react';
+import RequestMeta from '../../components/RequestMeta';
 
 export default function ProjectsPage() {
   const router = useRouter();
@@ -104,6 +105,7 @@ export default function ProjectsPage() {
                       </button>
                     </div>
                     
+                    <RequestMeta project={project} compact />
                     <h4 className="kanban-card-title">{project.title}</h4>
                     <p className="kanban-card-desc">{project.description || 'No description provided'}</p>
                     

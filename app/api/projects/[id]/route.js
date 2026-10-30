@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withRequestMetadata } from '@/lib/request-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
     }
     
-    return NextResponse.json(project);
+    return NextResponse.json(withRequestMetadata(project));
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch project' }, { status: 500 });
   }
@@ -178,7 +179,7 @@ export async function PUT(request, { params }) {
       });
     }
     
-    return NextResponse.json(project);
+    return NextResponse.json(withRequestMetadata(project));
   } catch (error) {
     console.error('Update project error:', error);
     return NextResponse.json({ error: 'Failed to update project' }, { status: 500 });

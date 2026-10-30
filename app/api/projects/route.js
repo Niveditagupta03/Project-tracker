@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { getRequestMetadata, withRequestMetadata } from '@/lib/request-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,15 +33,21 @@ export async function GET(request) {
       const searchWords = search.split(/\s+/).filter(word => word.length > 0);
       
       searchWords.forEach(word => {
+        const requestNumberMatch = word.match(/^CR-(\d+)$/i);
+        const searchFields = [
+          { title: { contains: word, mode: 'insensitive' } },
+          { owner: { contains: word, mode: 'insensitive' } },
+          { description: { contains: word, mode: 'insensitive' } },
+          { type: { contains: word, mode: 'insensitive' } },
+          { comments: { contains: word, mode: 'insensitive' } },
+          { status: { contains: word, mode: 'insensitive' } },
+        ];
+        if (requestNumberMatch) {
+          searchFields.push({ id: parseInt(requestNumberMatch[1], 10) });
+        }
+
         andConditions.push({
-          OR: [
-            { title: { contains: word, mode: 'insensitive' } },
-            { owner: { contains: word, mode: 'insensitive' } },
-            { description: { contains: word, mode: 'insensitive' } },
-            { type: { contains: word, mode: 'insensitive' } },
-            { comments: { contains: word, mode: 'insensitive' } },
-            { status: { contains: word, mode: 'insensitive' } },
-          ],
+          OR: searchFields,
         });
       });
     }
@@ -55,7 +62,7 @@ export async function GET(request) {
       orderBy: { createdAt: 'desc' }
     });
 
-    return NextResponse.json(projects);
+    return NextResponse.json(projects.map(withRequestMetadata));
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json({ error: 'Failed to fetch projects' }, { status: 500 });
@@ -87,17 +94,19 @@ export async function POST(request) {
       }
     });
 
+    const { requestNumber } = getRequestMetadata(project);
+
     // Log activity
     await prisma.activity.create({
       data: {
         userName,
         userRole,
         actionType: 'CREATE',
-        details: `added the project "${project.title}"`,
+        details: `added ${requestNumber ? `${requestNumber} · ` : ''}the project "${project.title}"`,
       }
     });
 
-    return NextResponse.json(project, { status: 201 });
+    return NextResponse.json(withRequestMetadata(project), { status: 201 });
   } catch (error) {
     console.error('Create error:', error);
     return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });

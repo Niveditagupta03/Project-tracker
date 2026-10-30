@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { normalizeRequestType } from '../lib/request-types';
 import { 
   Hexagon, Search, Plus, Bell, ChevronDown, 
   LayoutDashboard, Folder, Calendar, Users, BarChart2, 
@@ -168,7 +169,7 @@ export default function AppShell({ children }) {
           id: project.id,
           title: project.title || '',
           description: project.description || '',
-          type: project.type || '',
+          type: normalizeRequestType(project.type),
           owners: project.owner ? project.owner.split(', ') : [],
           status: project.status || 'Not Started',
           startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
@@ -588,15 +589,55 @@ export default function AppShell({ children }) {
                   <textarea name="description" value={formData.description} onChange={handleFormChange} rows={3} />
                 </div>
                 
-                <div className="form-group">
-                  <label>Type</label>
-                  <select name="type" value={formData.type} onChange={handleFormChange}>
-                    <option value="">Select Type</option>
-                    <option value="BAU">BAU</option>
-                    <option value="CR/New Requriment">CR/New Requriment</option>
-                    <option value="Support">Support</option>
-                  </select>
-                </div>
+                <fieldset className="form-group col-span-2 request-type-fieldset">
+                  <legend>Request classification *</legend>
+                  <div className="request-type-options" role="radiogroup" aria-label="Request classification">
+                    {[
+                      { value: 'CR', code: 'CR', title: 'Change Request', description: 'A change to existing scope, systems, or delivery.' },
+                      { value: 'SR', code: 'SR', title: 'Service Request', description: 'A service, support, or operational request.' },
+                      { value: 'BAU', code: 'BAU', title: 'Business as Usual', description: 'Routine work outside the CR and SR queues.' },
+                    ].map(option => (
+                      <label
+                        key={option.value}
+                        className={`request-type-option ${formData.type === option.value ? 'selected' : ''}`}
+                      >
+                        <input
+                          type="radio"
+                          name="type"
+                          value={option.value}
+                          checked={formData.type === option.value}
+                          onChange={handleFormChange}
+                          required
+                        />
+                        <span className="request-type-option-copy">
+                          <span className="request-type-option-heading">
+                            <span className={`request-type-code request-type-code-${option.value.toLowerCase()}`}>{option.code}</span>
+                            <span>{option.title}</span>
+                          </span>
+                          <span className="request-type-option-description">{option.description}</span>
+                        </span>
+                      </label>
+                    ))}
+                    {formData.type && !['CR', 'SR', 'BAU'].includes(formData.type) && (
+                      <label className="request-type-option selected">
+                        <input type="radio" name="type" value={formData.type} checked onChange={handleFormChange} />
+                        <span className="request-type-option-copy">
+                          <span className="request-type-option-heading">Legacy type</span>
+                          <span className="request-type-option-description">{formData.type}</span>
+                        </span>
+                      </label>
+                    )}
+                  </div>
+                  <p className="request-type-guidance" role="status">
+                    {formData.type === 'CR'
+                      ? formData.id
+                        ? `This change request is CR-${String(formData.id).padStart(4, '0')}.`
+                        : 'A unique CR number, such as CR-0001, is assigned automatically when you save.'
+                      : formData.type === 'SR'
+                        ? 'Service requests are clearly labeled SR and stay separate from the change request queue.'
+                        : 'Choose CR or SR to place request work in the correct queue.'}
+                  </p>
+                </fieldset>
                 
                 <div className="form-group">
                   <label>Status</label>

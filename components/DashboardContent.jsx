@@ -6,6 +6,8 @@ import Link from 'next/link';
 import * as XLSX from 'xlsx';
 import '../app/page.css';
 import { Plus, Search, Calendar, MoreVertical, Edit2, Trash2, Download, ChevronDown, Folder, Clock, Activity, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
+import { getRequestMetadata } from '../lib/request-types';
+import RequestMeta from './RequestMeta';
 
 export default function DashboardContent() {
   const router = useRouter();
@@ -203,20 +205,24 @@ export default function DashboardContent() {
 
     const formatDate = (dateStr) => dateStr ? new Date(dateStr).toLocaleDateString() : '';
 
-    const data = projects.map((p, i) => ({
-      'Sr No': i + 1,
-      'Project Title': p.title,
-      'Project Description': p.description,
-      'Project Type': p.type,
-      'Owner': p.owner,
-      'Status': p.status,
-      'Start Date': formatDate(p.startDate),
-      'End Date': formatDate(p.endDate),
-      'UAT Date': formatDate(p.uatDate),
-      'Prod Date': formatDate(p.prodDate),
-      'Dependency With': p.dependencyWith,
-      'Comments': p.comments
-    }));
+    const data = projects.map((p, i) => {
+      const metadata = getRequestMetadata(p);
+      return {
+        'Sr No': i + 1,
+        'Request Number': metadata.requestNumber || '',
+        'Request Classification': metadata.requestLabel,
+        'Project Title': p.title,
+        'Project Description': p.description,
+        'Owner': p.owner,
+        'Status': p.status,
+        'Start Date': formatDate(p.startDate),
+        'End Date': formatDate(p.endDate),
+        'UAT Date': formatDate(p.uatDate),
+        'Prod Date': formatDate(p.prodDate),
+        'Dependency With': p.dependencyWith,
+        'Comments': p.comments
+      };
+    });
 
     const worksheet = XLSX.utils.json_to_sheet(data);
     const workbook = XLSX.utils.book_new();
@@ -581,7 +587,7 @@ export default function DashboardContent() {
                             {project.title}
                           </Link>
                         </div>
-                        <div className="text-xs text-muted">{project.type}</div>
+                        <RequestMeta project={project} compact />
                       </td>
                       <td>
                         <div className="owner-text">{project.owner || '-'}</div>
