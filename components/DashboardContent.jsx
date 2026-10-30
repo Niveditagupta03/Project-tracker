@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import * as XLSX from 'xlsx';
 import '../app/page.css';
 import { Plus, Search, Calendar, MoreVertical, Edit2, Trash2, Download, ChevronDown, Folder, Clock, Activity, CheckCircle2, TrendingUp, TrendingDown } from 'lucide-react';
@@ -175,6 +176,13 @@ export default function DashboardContent() {
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays === 1) return 'Yesterday';
     return date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  };
+
+  const handleMetricKeyDown = (event, status) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setFilters(prev => ({ ...prev, status }));
+    }
   };
 
   const handleFilterChange = (e) => {
@@ -373,11 +381,18 @@ export default function DashboardContent() {
   };
 
   return (
-    <div className="dashboard-content">
+    <main className="dashboard-content dashboard-page">
+      <header className="dashboard-intro">
+        <div>
+          <p className="dashboard-eyebrow">PORTFOLIO OVERVIEW</p>
+          <h1>Project dashboard</h1>
+          <p className="dashboard-intro-copy">A clear view of delivery progress, key dates, and project health.</p>
+        </div>
+      </header>
       <div className="dashboard-grid">
         <div className="dashboard-main">
           <div className="metric-tiles">
-            <div className={`metric-card ${!filters.status ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: '' }))}>
+            <div role="button" tabIndex={0} aria-pressed={!filters.status} onKeyDown={event => handleMetricKeyDown(event, '')} className={`metric-card ${!filters.status ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: '' }))}>
               <div className="metric-header">
                 <span className="metric-title">Total Projects</span>
                 <div className="metric-icon-bg purple-bg">
@@ -388,7 +403,7 @@ export default function DashboardContent() {
               {renderTrend(totalTrend)}
             </div>
 
-            <div className={`metric-card ${filters.status === 'In Progress' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'In Progress' }))}>
+            <div role="button" tabIndex={0} aria-pressed={filters.status === 'In Progress'} onKeyDown={event => handleMetricKeyDown(event, 'In Progress')} className={`metric-card ${filters.status === 'In Progress' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'In Progress' }))}>
               <div className="metric-header">
                 <span className="metric-title">In Progress</span>
                 <div className="metric-icon-bg orange-bg">
@@ -399,7 +414,7 @@ export default function DashboardContent() {
               {renderTrend(inProgressTrend)}
             </div>
 
-            <div className={`metric-card ${filters.status === 'Completed' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'Completed' }))}>
+            <div role="button" tabIndex={0} aria-pressed={filters.status === 'Completed'} onKeyDown={event => handleMetricKeyDown(event, 'Completed')} className={`metric-card ${filters.status === 'Completed' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'Completed' }))}>
               <div className="metric-header">
                 <span className="metric-title">Completed</span>
                 <div className="metric-icon-bg green-bg">
@@ -410,7 +425,7 @@ export default function DashboardContent() {
               {renderTrend(completedTrend)}
             </div>
 
-            <div className={`metric-card ${filters.status === 'Delayed' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'Delayed' }))}>
+            <div role="button" tabIndex={0} aria-pressed={filters.status === 'Delayed'} onKeyDown={event => handleMetricKeyDown(event, 'Delayed')} className={`metric-card ${filters.status === 'Delayed' ? 'active' : ''}`} onClick={() => setFilters(prev => ({ ...prev, status: 'Delayed' }))}>
               <div className="metric-header">
                 <span className="metric-title">Delayed</span>
                 <div className="metric-icon-bg red-bg">
@@ -459,75 +474,74 @@ export default function DashboardContent() {
           )}
 
           {/* FILTER BAR AND TABLE */}
-          <div className="glass-panel dashboard-header" style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div className="filter-bar" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', width: '100%', paddingBottom: '4px' }}>
-              <div className="filter-left-side" style={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: '0.75rem', flex: '1 1 auto' }}>
-                <div className="filter-group-container" style={{ flex: '1 1 150px', minWidth: '120px', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Search</label>
+          <section className="glass-panel dashboard-header dashboard-filter-panel" aria-label="Project filters">
+            <div className="filter-bar">
+              <div className="filter-left-side">
+                <div className="filter-group-container filter-search-container">
+                  <label htmlFor="project-search">Search</label>
                   <div className="filter-group search-filter">
-                    <Search size={14} className="icon" style={{ left: '8px' }} />
+                    <Search size={15} className="icon" aria-hidden="true" />
                     <input 
                       type="text" 
+                      id="project-search"
                       name="search"
                       value={filters.search}
                       onChange={handleFilterChange}
-                      placeholder="Search..." 
+                      placeholder="Search projects"
                       className="filter-input" 
-                      style={{ width: '100%', fontSize: '0.8rem', padding: '0.4rem 0.4rem 0.4rem 1.8rem' }} 
                     />
                   </div>
                 </div>
                 
-                <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Owner</label>
+                <div className="filter-group-container">
+                  <label htmlFor="project-owner">Owner</label>
                   <div className="filter-group">
-                    <select name="owner" value={filters.owner} onChange={handleFilterChange} className="filter-input" style={{ appearance: 'none', minWidth: '100px', fontSize: '0.8rem', padding: '0.4rem 1.6rem 0.4rem 0.6rem' }}>
+                    <select id="project-owner" name="owner" value={filters.owner} onChange={handleFilterChange} className="filter-input">
                       <option value="">All Owners</option>
                       {availableOwners.map(owner => (
                         <option key={owner} value={owner}>{owner}</option>
                       ))}
                     </select>
-                    <ChevronDown size={12} className="icon-right" style={{ right: '6px' }} />
+                    <ChevronDown size={14} className="icon-right" aria-hidden="true" />
                   </div>
                 </div>
                 
-                <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Status</label>
+                <div className="filter-group-container">
+                  <label htmlFor="project-status">Status</label>
                   <div className="filter-group">
-                    <select name="status" value={filters.status} onChange={handleFilterChange} className="filter-input" style={{ appearance: 'none', minWidth: '100px', fontSize: '0.8rem', padding: '0.4rem 1.6rem 0.4rem 0.6rem' }}>
+                    <select id="project-status" name="status" value={filters.status} onChange={handleFilterChange} className="filter-input">
                       <option value="">All</option>
                       <option value="Not Started">Not Started</option>
                       <option value="In Progress">In Progress</option>
                       <option value="Completed">Completed</option>
                       <option value="Blocked">Blocked</option>
                     </select>
-                    <ChevronDown size={12} className="icon-right" style={{ right: '6px' }} />
+                    <ChevronDown size={14} className="icon-right" aria-hidden="true" />
                   </div>
                 </div>
                 
-                <div className="filter-group-container" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', flexShrink: 0 }}>
-                  <label style={{ fontSize: '0.7rem', fontWeight: '600', color: '#64748B', marginLeft: '0.25rem' }}>Date Range</label>
-                  <div className="filter-group" style={{ gap: '0.2rem' }}>
-                    <Calendar size={14} className="icon" style={{ left: '8px' }} />
-                    <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="filter-input" style={{ padding: '0.4rem 0.2rem 0.4rem 1.8rem', fontSize: '0.75rem', width: '105px' }} />
-                    <span style={{ color: '#94A3B8', fontSize: '0.75rem' }}>-</span>
-                    <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="filter-input" style={{ padding: '0.4rem 0.2rem 0.4rem 0.4rem', fontSize: '0.75rem', width: '105px' }} />
+                <div className="filter-group-container filter-date-container">
+                  <label htmlFor="project-start-date">Date range</label>
+                  <div className="filter-group date-range-group">
+                    <Calendar size={15} className="icon" aria-hidden="true" />
+                    <input id="project-start-date" type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className="filter-input" aria-label="Start date" />
+                    <span aria-hidden="true">to</span>
+                    <input id="project-end-date" type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className="filter-input" aria-label="End date" />
                   </div>
                 </div>
-
-                <button className="text-btn" style={{ fontSize: '0.75rem', color: '#64748B', fontWeight: '500', height: '31px', padding: '0 0.5rem', flexShrink: 0 }} onClick={() => setFilters({ owner: '', status: '', startDate: '', endDate: '', search: '' })}>
-                  Clear Filters
-                </button>
               </div>
 
-              <div className="filter-right-side" style={{ display: 'flex', alignItems: 'flex-end', flexShrink: 0 }}>
-                <button className="btn btn-secondary" onClick={exportToXLSX} style={{ background: '#F8FAFC', border: '1px solid #E2E8F0', padding: '0.4rem 0.8rem', height: '31px', fontSize: '0.8rem', flexShrink: 0 }}>
-                  <Download size={14} style={{ marginRight: '4px' }} />
+              <div className="filter-right-side">
+                <button type="button" className="text-btn clear-filters-btn" onClick={() => setFilters({ owner: '', status: '', startDate: '', endDate: '', search: '' })}>
+                  Clear filters
+                </button>
+                <button type="button" className="btn btn-secondary export-btn" onClick={exportToXLSX}>
+                  <Download size={15} aria-hidden="true" />
                   Export
                 </button>
               </div>
             </div>
-          </div>
+          </section>
 
           <div className="glass-panel table-container">
             {loading ? (
@@ -535,7 +549,7 @@ export default function DashboardContent() {
             ) : projects.length === 0 ? (
               <div className="empty-state">No projects found. Create one to get started!</div>
             ) : (
-              <table className="projects-table">
+              <table className="projects-table" aria-label="Project portfolio">
                 <thead>
                   <tr>
                     <th style={{ width: '60px' }}>S.NO</th>
@@ -562,7 +576,11 @@ export default function DashboardContent() {
                     >
                       <td className="text-muted" style={{ fontWeight: '500' }}>{index + 1}</td>
                       <td>
-                        <div className="font-medium text-dark">{project.title}</div>
+                        <div className="font-medium text-dark">
+                          <Link className="project-title-link" href={`/project/${project.id}`} onClick={event => event.stopPropagation()}>
+                            {project.title}
+                          </Link>
+                        </div>
                         <div className="text-xs text-muted">{project.type}</div>
                       </td>
                       <td>
@@ -603,7 +621,7 @@ export default function DashboardContent() {
                       </td>
                       {currentUser && (
                         <td className="actions-cell">
-                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); toggleDropdown(project.id); }}>
+                          <button type="button" className="icon-btn" aria-label={`Actions for ${project.title}`} aria-expanded={activeDropdown === project.id} onClick={(e) => { e.stopPropagation(); toggleDropdown(project.id); }}>
                             <MoreVertical size={16} />
                           </button>
                           {activeDropdown === project.id && (
@@ -766,6 +784,6 @@ export default function DashboardContent() {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
