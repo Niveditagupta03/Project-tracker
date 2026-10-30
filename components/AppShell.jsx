@@ -236,6 +236,8 @@ export default function AppShell({ children }) {
   };
 
   const openNewModal = () => {
+    fetchRegisteredUsers();
+    fetchOwners();
     setFormData({
       title: '', description: '', type: '', owners: [], status: 'Not Started',
       startDate: '', endDate: '', uatDate: '', prodDate: '', dependencyWith: '', comments: '',
