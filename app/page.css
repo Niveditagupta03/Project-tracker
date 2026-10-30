@@ -2419,6 +2419,38 @@
   color: #53617a;
 }
 
+.dashboard-page .badge-success {
+  border-color: #a7f3d0;
+  background: #ecfdf5;
+  color: #067647;
+}
+
+.dashboard-page .badge-warning {
+  border-color: #fde68a;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.dashboard-page .badge-danger {
+  border-color: #fecaca;
+  background: #fef2f2;
+  color: #b42318;
+}
+
+.dashboard-page .badge-neutral {
+  border-color: #d7dfeb;
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.dashboard-page .metric-trend {
+  color: #526079;
+}
+
+.dashboard-page .metric-trend span {
+  color: #526079;
+}
+
 .dashboard-page .progress-text,
 .dashboard-page .date-cell {
   font-variant-numeric: tabular-nums;
