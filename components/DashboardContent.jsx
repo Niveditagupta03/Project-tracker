@@ -351,6 +351,26 @@ export default function DashboardContent() {
 
   const displayDeadlines = upcomingDeadlines.slice(0, 3);
 
+  const milestoneMonths = Array.from({ length: 7 }, (_, index) =>
+    new Date(todayVal.getFullYear(), todayVal.getMonth() - 5 + index, 1)
+  );
+  const milestoneSeries = [
+    { label: 'Project starts', key: 'startDate', color: '#0758C7' },
+    { label: 'UAT', key: 'uatDate', color: '#4F8FE8' },
+    { label: 'Target end', key: 'endDate', color: '#A6C8F5' },
+  ].map(series => ({
+    ...series,
+    values: milestoneMonths.map(month => allProjects.filter(project => {
+      if (!project[series.key]) return false;
+      const date = new Date(project[series.key]);
+      return date.getFullYear() === month.getFullYear() && date.getMonth() === month.getMonth();
+    }).length),
+  }));
+  const milestoneMax = Math.max(4, ...milestoneSeries.flatMap(series => series.values));
+  const milestoneChart = { width: 700, height: 280, left: 48, right: 18, top: 20, bottom: 40 };
+  const milestoneX = index => milestoneChart.left + index * ((milestoneChart.width - milestoneChart.left - milestoneChart.right) / (milestoneMonths.length - 1));
+  const milestoneY = value => milestoneChart.top + ((milestoneMax - value) / milestoneMax) * (milestoneChart.height - milestoneChart.top - milestoneChart.bottom);
+
   const getDeadlineBadge = (date) => {
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
@@ -390,9 +410,9 @@ export default function DashboardContent() {
     <main className="dashboard-content dashboard-page">
       <header className="dashboard-intro">
         <div>
-          <p className="dashboard-eyebrow">PORTFOLIO OVERVIEW</p>
-          <h1>Project dashboard</h1>
-          <p className="dashboard-intro-copy">A clear view of delivery progress, key dates, and project health.</p>
+          <p className="dashboard-eyebrow">PROJECT OPERATIONS / LIVE PORTFOLIO</p>
+          <h1>Project portfolio</h1>
+          <p className="dashboard-intro-copy">Track delivery health, ownership, and the milestones that need attention.</p>
         </div>
       </header>
       <div className="dashboard-grid">
@@ -442,6 +462,102 @@ export default function DashboardContent() {
               {renderTrend(delayedTrend, true)}
             </div>
           </div>
+
+          <section className="dashboard-insights" aria-label="Project insights">
+            <div className="project-trend-widget">
+              <div className="widget-header project-trend-header">
+                <div>
+                  <h3>Project milestones</h3>
+                  <p>Starts, UAT, and target dates by month</p>
+                </div>
+                <span className="chart-period">Last 7 months</span>
+              </div>
+              {allProjects.length > 0 ? (
+                <>
+                  <svg
+                    className="milestone-chart"
+                    viewBox={`0 0 ${milestoneChart.width} ${milestoneChart.height}`}
+                    role="img"
+                    aria-label="Monthly counts of project starts, UAT dates, and target end dates"
+                  >
+                    {[0, Math.ceil(milestoneMax / 3), Math.ceil(milestoneMax * 2 / 3), milestoneMax].map((tick, index) => {
+                      const value = [...new Set([0, Math.ceil(milestoneMax / 3), Math.ceil(milestoneMax * 2 / 3), milestoneMax])][index];
+                      const y = milestoneY(value);
+                      return (
+                        <g key={`grid-${index}`}>
+                          <line x1={milestoneChart.left} x2={milestoneChart.width - milestoneChart.right} y1={y} y2={y} className="milestone-grid-line" />
+                          <text x={milestoneChart.left - 12} y={y + 4} textAnchor="end" className="milestone-axis-label">{value}</text>
+                        </g>
+                      );
+                    })}
+                    {milestoneMonths.map((month, index) => (
+                      <text key={month.toISOString()} x={milestoneX(index)} y={milestoneChart.height - 8} textAnchor="middle" className="milestone-axis-label">
+                        {month.toLocaleDateString('en-US', { month: 'short' })}
+                      </text>
+                    ))}
+                    {milestoneSeries.map(series => (
+                      <g key={series.key}>
+                        <polyline
+                          points={series.values.map((value, index) => `${milestoneX(index)},${milestoneY(value)}`).join(' ')}
+                          fill="none"
+                          stroke={series.color}
+                          strokeWidth="3"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="milestone-series-line"
+                        />
+                        {series.values.map((value, index) => (
+                          <circle key={`${series.key}-${index}`} cx={milestoneX(index)} cy={milestoneY(value)} r="3.5" fill={series.color} className="milestone-series-point" />
+                        ))}
+                      </g>
+                    ))}
+                  </svg>
+                  <div className="milestone-legend">
+                    {milestoneSeries.map(series => (
+                      <span key={series.key}><i style={{ backgroundColor: series.color }} />{series.label}</span>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <div className="milestone-empty-state">Add project milestone dates to see the portfolio timeline.</div>
+              )}
+            </div>
+
+            {/* PROJECT PROGRESS OVERVIEW WIDGET */}
+            <div className="progress-overview-widget glass-panel">
+              <div className="widget-header">
+                <h3>Project progress</h3>
+              </div>
+              <div className="progress-overview-content">
+                <div className="donut-chart-container">
+                  <svg viewBox="0 0 36 36" className="donut-chart" role="img" aria-label={`${totalProjectsCount} total projects`}>
+                    <circle className="donut-ring" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#E2E8F0" strokeWidth="4" />
+                    {completedPct > 0 && <circle className="donut-segment segment-completed" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#10B981" strokeWidth="4" strokeDasharray={`${completedPct} ${100 - completedPct}`} strokeDashoffset={completedOffset} />}
+                    {inProgressPct > 0 && <circle className="donut-segment segment-inprogress" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#FBBF24" strokeWidth="4" strokeDasharray={`${inProgressPct} ${100 - inProgressPct}`} strokeDashoffset={inProgressOffset} />}
+                    {notStartedPct > 0 && <circle className="donut-segment segment-notstarted" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#CBD5E1" strokeWidth="4" strokeDasharray={`${notStartedPct} ${100 - notStartedPct}`} strokeDashoffset={notStartedOffset} />}
+                    {delayedPct > 0 && <circle className="donut-segment segment-delayed" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#F87171" strokeWidth="4" strokeDasharray={`${delayedPct} ${100 - delayedPct}`} strokeDashoffset={delayedOffset} />}
+                  </svg>
+                  <div className="donut-center-text">
+                    <span className="donut-total">{totalProjectsCount}</span>
+                    <span className="donut-label">Projects</span>
+                  </div>
+                </div>
+                <div className="progress-legend">
+                  {[
+                    { label: 'Completed', count: completedCount, pct: completedPct, color: '#10B981' },
+                    { label: 'In Progress', count: inProgressCount, pct: inProgressPct, color: '#FBBF24' },
+                    { label: 'Not Started', count: notStartedCount, pct: notStartedPct, color: '#94A3B8' },
+                    { label: 'Delayed', count: delayedCount, pct: delayedPct, color: '#EF6B6B' },
+                  ].map(item => (
+                    <div className="legend-item" key={item.label}>
+                      <div className="legend-label"><span className="legend-dot" style={{ background: item.color }} />{item.label}</div>
+                      <div className="legend-value">{item.count} <span className="legend-pct">({item.pct.toFixed(1)}%)</span></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* OWNER STATS BANNER */}
           {ownerStats && (
@@ -653,79 +769,6 @@ export default function DashboardContent() {
         </div>
 
         <div className="dashboard-right">
-          {/* PROJECT PROGRESS OVERVIEW WIDGET */}
-          <div className="progress-overview-widget glass-panel">
-            <div className="widget-header">
-              <h3>Project Progress Overview</h3>
-            </div>
-            
-            <div className="progress-overview-content">
-              <div className="donut-chart-container">
-                <svg viewBox="0 0 36 36" className="donut-chart">
-                  <circle className="donut-ring" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#E2E8F0" strokeWidth="4"></circle>
-                  
-                  {completedPct > 0 && (
-                    <circle className="donut-segment segment-completed" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#10B981" strokeWidth="4"
-                      strokeDasharray={`${completedPct} ${100 - completedPct}`} strokeDashoffset={completedOffset}></circle>
-                  )}
-                  
-                  {inProgressPct > 0 && (
-                    <circle className="donut-segment segment-inprogress" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#FBBF24" strokeWidth="4"
-                      strokeDasharray={`${inProgressPct} ${100 - inProgressPct}`} strokeDashoffset={inProgressOffset}></circle>
-                  )}
-                  
-                  {notStartedPct > 0 && (
-                    <circle className="donut-segment segment-notstarted" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#CBD5E1" strokeWidth="4"
-                      strokeDasharray={`${notStartedPct} ${100 - notStartedPct}`} strokeDashoffset={notStartedOffset}></circle>
-                  )}
-                  
-                  {delayedPct > 0 && (
-                    <circle className="donut-segment segment-delayed" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#F87171" strokeWidth="4"
-                      strokeDasharray={`${delayedPct} ${100 - delayedPct}`} strokeDashoffset={delayedOffset}></circle>
-                  )}
-                </svg>
-                <div className="donut-center-text">
-                  <span className="donut-total">{totalProjectsCount}</span>
-                  <span className="donut-label">Total Projects</span>
-                </div>
-              </div>
-
-              <div className="progress-legend">
-                <div className="legend-item">
-                  <div className="legend-label">
-                    <span className="legend-dot" style={{ background: '#10B981' }}></span>
-                    Completed
-                  </div>
-                  <div className="legend-value">{completedCount} <span className="legend-pct">({completedPct.toFixed(1)}%)</span></div>
-                </div>
-                
-                <div className="legend-item">
-                  <div className="legend-label">
-                    <span className="legend-dot" style={{ background: '#FBBF24' }}></span>
-                    In Progress
-                  </div>
-                  <div className="legend-value">{inProgressCount} <span className="legend-pct">({inProgressPct.toFixed(1)}%)</span></div>
-                </div>
-                
-                <div className="legend-item">
-                  <div className="legend-label">
-                    <span className="legend-dot" style={{ background: '#CBD5E1' }}></span>
-                    Not Started
-                  </div>
-                  <div className="legend-value">{notStartedCount} <span className="legend-pct">({notStartedPct.toFixed(1)}%)</span></div>
-                </div>
-                
-                <div className="legend-item">
-                  <div className="legend-label">
-                    <span className="legend-dot" style={{ background: '#F87171' }}></span>
-                    Delayed
-                  </div>
-                  <div className="legend-value">{delayedCount} <span className="legend-pct">({delayedPct.toFixed(1)}%)</span></div>
-                </div>
-              </div>
-            </div>
-          </div>
-
           <div className="deadlines-widget">
             <div className="widget-header">
               <h3>Upcoming Deadlines</h3>
