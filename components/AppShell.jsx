@@ -164,6 +164,8 @@ export default function AppShell({ children }) {
       if (!parsed || (parsed.role !== 'admin' && !project)) {
         return; // Only admin can create new projects, but both can edit existing ones
       }
+      fetchRegisteredUsers();
+      fetchOwners();
       if (project) {
         setFormData({
           id: project.id,
@@ -256,6 +258,14 @@ export default function AppShell({ children }) {
         return { ...prev, owners: [...current, ownerName] };
       }
     });
+  };
+
+  const handleOwnerSelect = (e) => {
+    const ownerName = e.target.value;
+    if (ownerName && !formData.owners.includes(ownerName)) {
+      setFormData(prev => ({ ...prev, owners: [...(prev.owners || []), ownerName] }));
+    }
+    e.target.value = '';
   };
 
   const handleAddPerson = () => {
@@ -546,33 +556,22 @@ export default function AppShell({ children }) {
                     </div>
                   )}
 
-                  <div className="checkbox-list">
-                    {availableOwners.map(owner => (
-                      <div key={owner} className="checkbox-item-row">
-                        <label className="checkbox-item">
-                          <input 
-                            type="checkbox" 
-                            checked={formData.owners.includes(owner)} 
-                            onChange={() => handleOwnerToggle(owner)} 
-                          />
-                          {owner}
-                        </label>
-                        <button 
-                          type="button" 
-                          className="icon-btn remove-owner-btn" 
-                          title="Remove from list"
-                          onClick={() => {
-                            setAvailableOwners(availableOwners.filter(o => o !== owner));
-                            if (formData.owners.includes(owner)) {
-                              handleOwnerToggle(owner);
-                            }
-                          }}
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                  <select
+                    aria-label="Select team member"
+                    className="form-select"
+                    value=""
+                    onChange={handleOwnerSelect}
+                  >
+                    <option value="" disabled>Select a team member…</option>
+                    {[...new Set([
+                      ...registeredUsers.filter(user => user.role !== 'admin').map(user => user.name),
+                      ...availableOwners,
+                      ...(formData.owners || []),
+                    ].filter(Boolean))]
+                      .filter(owner => !formData.owners.includes(owner))
+                      .sort((a, b) => a.localeCompare(b))
+                      .map(owner => <option key={owner} value={owner}>{owner}</option>)}
+                  </select>
                   <div className="add-person-group">
                     <input 
                       type="text" 
