@@ -19,7 +19,6 @@ export default function AppShell({ children }) {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [availableOwners, setAvailableOwners] = useState([]);
-  const [newPersonName, setNewPersonName] = useState('');
   const [registeredUsers, setRegisteredUsers] = useState([]);
   
   const [formData, setFormData] = useState({
@@ -268,14 +267,6 @@ export default function AppShell({ children }) {
       setFormData(prev => ({ ...prev, owners: [...(prev.owners || []), ownerName] }));
     }
     e.target.value = '';
-  };
-
-  const handleAddPerson = () => {
-    if (newPersonName.trim() && !availableOwners.includes(newPersonName.trim())) {
-      setAvailableOwners([...availableOwners, newPersonName.trim()]);
-      handleOwnerToggle(newPersonName.trim());
-      setNewPersonName('');
-    }
   };
 
   const handleSubmit = async (e) => {
@@ -574,15 +565,6 @@ export default function AppShell({ children }) {
                       .sort((a, b) => a.localeCompare(b))
                       .map(owner => <option key={owner} value={owner}>{owner}</option>)}
                   </select>
-                  <div className="add-person-group">
-                    <input 
-                      type="text" 
-                      placeholder="Add new person..." 
-                      value={newPersonName} 
-                      onChange={(e) => setNewPersonName(e.target.value)} 
-                    />
-                    <button type="button" onClick={handleAddPerson}>Add</button>
-                  </div>
                 </div>
                 
                 <div className="form-group col-span-2">

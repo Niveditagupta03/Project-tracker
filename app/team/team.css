@@ -28,6 +28,101 @@
   font-size: 0.85rem;
 }
 
+.team-add-person-button,
+.team-add-person-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  border: 0;
+  border-radius: 0.55rem;
+  padding: 0.7rem 1rem;
+  background: linear-gradient(135deg, #2B4593 0%, #3B5BB3 100%);
+  color: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 0.25rem 0.75rem rgba(43, 69, 147, 0.16);
+}
+
+.team-add-person-button:hover,
+.team-add-person-submit:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.team-add-person-panel {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #E2E8F0;
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.team-add-person-copy h2 {
+  margin: 0;
+  color: #0F172A;
+  font-size: 1rem;
+}
+
+.team-add-person-copy p {
+  margin: 0.3rem 0 0;
+  color: #64748B;
+  font-size: 0.8rem;
+}
+
+.team-add-person-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  gap: 0.85rem;
+  align-items: end;
+}
+
+.team-add-person-fields label {
+  display: grid;
+  gap: 0.35rem;
+  color: #475569;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.team-add-person-fields input {
+  width: 100%;
+  min-height: 2.5rem;
+  box-sizing: border-box;
+  border: 1px solid #CBD5E1;
+  border-radius: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  color: #0F172A;
+  background: #F8FAFC;
+  font: inherit;
+  font-size: 0.82rem;
+}
+
+.team-add-person-fields input:focus {
+  outline: 3px solid rgba(59, 91, 179, 0.15);
+  border-color: #3B5BB3;
+}
+
+.team-add-person-submit:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.team-add-person-message {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.team-add-person-message.error { color: #B91C1C; }
+.team-add-person-message.success { color: #047857; }
+
+@media (max-width: 760px) {
+  .team-add-person-fields { grid-template-columns: 1fr; }
+  .team-add-person-button { flex-shrink: 0; }
+}
+
 /* Stats Overview Cards */
 .team-stats-grid {
   display: grid;

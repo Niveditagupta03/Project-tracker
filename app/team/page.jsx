@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users, Shield, User, Search, Activity, ChevronDown, Clock, AlertTriangle, CheckCircle2, UserCheck } from 'lucide-react';
+import { Users, Shield, User, Search, Activity, ChevronDown, Clock, AlertTriangle, CheckCircle2, UserCheck, Plus } from 'lucide-react';
 import './team.css';
 
 export default function TeamDashboardPage() {
@@ -12,6 +12,11 @@ export default function TeamDashboardPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAuthorized, setIsAuthorized] = useState(false);
+  const [showAddPerson, setShowAddPerson] = useState(false);
+  const [savingPerson, setSavingPerson] = useState(false);
+  const [personMessage, setPersonMessage] = useState('');
+  const [personError, setPersonError] = useState('');
+  const [personForm, setPersonForm] = useState({ name: '', username: '', password: '' });
   const [filters, setFilters] = useState({
     search: '',
     role: '',
@@ -60,6 +65,36 @@ export default function TeamDashboardPage() {
 
     fetchData();
   }, []);
+
+  const handleAddPerson = async (event) => {
+    event.preventDefault();
+    setPersonError('');
+    setPersonMessage('');
+    setSavingPerson(true);
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...personForm, role: 'reportee' }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        setPersonError(result.error || 'Could not add this team member.');
+        return;
+      }
+
+      const usersResponse = await fetch('/api/users');
+      if (usersResponse.ok) setUsers(await usersResponse.json());
+      setPersonForm({ name: '', username: '', password: '' });
+      setPersonMessage('Team member added. They can now sign in with these credentials.');
+    } catch (error) {
+      setPersonError('Could not connect to the server. Please try again.');
+    } finally {
+      setSavingPerson(false);
+    }
+  };
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
@@ -176,10 +211,49 @@ export default function TeamDashboardPage() {
     <div className="team-container">
       <div className="team-header-section">
         <div>
-          <h1>Team Directory & Workloads</h1>
-          <p>Monitor team details, project assignments, and bandwidth utilization</p>
+          <h1>Admin Team Setup</h1>
+          <p>Manage team accounts, project assignments, and bandwidth utilization</p>
         </div>
+        <button
+          type="button"
+          className="team-add-person-button"
+          onClick={() => {
+            setShowAddPerson(value => !value);
+            setPersonError('');
+            setPersonMessage('');
+          }}
+        >
+          <Plus size={16} /> Add New Person
+        </button>
       </div>
+
+      {showAddPerson && (
+        <form className="team-add-person-panel glass-panel" onSubmit={handleAddPerson}>
+          <div className="team-add-person-copy">
+            <h2>Add a team member</h2>
+            <p>Create a team account. New accounts get the Team Member role.</p>
+          </div>
+          <div className="team-add-person-fields">
+            <label>
+              Full name
+              <input required value={personForm.name} onChange={e => setPersonForm({ ...personForm, name: e.target.value })} autoComplete="name" />
+            </label>
+            <label>
+              Username
+              <input required minLength={3} value={personForm.username} onChange={e => setPersonForm({ ...personForm, username: e.target.value })} autoComplete="username" />
+            </label>
+            <label>
+              Temporary password
+              <input required minLength={4} type="password" value={personForm.password} onChange={e => setPersonForm({ ...personForm, password: e.target.value })} autoComplete="new-password" />
+            </label>
+            <button type="submit" disabled={savingPerson} className="team-add-person-submit">
+              {savingPerson ? 'Adding…' : 'Create account'}
+            </button>
+          </div>
+          {personError && <p className="team-add-person-message error" role="alert">{personError}</p>}
+          {personMessage && <p className="team-add-person-message success" role="status">{personMessage}</p>}
+        </form>
+      )}
 
       {loading ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '18.75rem', background: 'white', borderRadius: '0.75rem', border: '0.0625rem solid #E2E8F0' }}>
